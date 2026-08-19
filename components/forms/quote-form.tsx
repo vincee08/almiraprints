@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, CheckCircle2, Upload, X } from "lucide-react";
@@ -20,6 +21,7 @@ import { quoteFormSchema, QuoteFormValues } from "@/lib/validations";
 import { serviceCategories, services } from "@/data/services";
 
 export function QuoteForm() {
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -38,13 +40,33 @@ export function QuoteForm() {
     },
   });
 
+  // Preselect service from URL parameter
+  useEffect(() => {
+    const serviceSlug = searchParams.get("service");
+    if (serviceSlug) {
+      const preselectedService = services.find(s => s.slug === serviceSlug);
+      if (preselectedService) {
+        setValue("serviceCategory", preselectedService.category.name);
+        setValue("specificService", preselectedService.title);
+      }
+    }
+  }, [searchParams, setValue]);
+
   const selectedCategory = watch("serviceCategory");
+  const selectedService = watch("specificService");
   const hasDesignFile = watch("hasDesignFile");
 
   // Filter services based on selected category
   const filteredServices = selectedCategory
     ? services.filter((s) => s.category.name === selectedCategory)
     : [];
+
+  // Check if selected service is T-shirt related
+  const isTshirtService = selectedService && (
+    selectedService.includes("T-Shirt") || 
+    selectedService.includes("Sublimation") || 
+    selectedService.includes("Vinyl")
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,7 +106,7 @@ export function QuoteForm() {
       <Card>
         <CardContent className="pt-6">
           <div className="text-center space-y-4 py-8">
-            <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto" />
+            <CheckCircle2 className="h-16 w-16 text-success mx-auto" />
             <div>
               <h3 className="text-xl font-semibold mb-2">Quote Request Submitted!</h3>
               <p className="text-muted-foreground">
@@ -267,6 +289,55 @@ export function QuoteForm() {
               />
             </div>
           </div>
+
+          {/* T-Shirt Specific Fields */}
+          {isTshirtService && (
+            <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-primary/5">
+              <h3 className="font-semibold text-sm">T-Shirt Details</h3>
+              
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tshirtSize">T-Shirt Size(s)</Label>
+                  <Input
+                    id="tshirtSize"
+                    placeholder="e.g., S, M, L, XL, XXL"
+                    {...register("tshirtSize")}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Specify sizes and quantities if known
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tshirtColor">T-Shirt Color(s)</Label>
+                  <Input
+                    id="tshirtColor"
+                    placeholder="e.g., White, Black, Navy"
+                    {...register("tshirtColor")}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="printLocation">Print Location</Label>
+                <Select
+                  onValueChange={(value) => setValue("printLocation", value)}
+                  defaultValue={watch("printLocation")}
+                >
+                  <SelectTrigger id="printLocation">
+                    <SelectValue placeholder="Select print location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="front">Front Only</SelectItem>
+                    <SelectItem value="back">Back Only</SelectItem>
+                    <SelectItem value="both">Front & Back</SelectItem>
+                    <SelectItem value="sleeve">Sleeve</SelectItem>
+                    <SelectItem value="custom">Custom Location</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           {/* Additional Requirements */}
           <div className="space-y-2">

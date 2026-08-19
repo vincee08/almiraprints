@@ -151,6 +151,102 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                     </CardContent>
                   </Card>
                 )}
+
+                {service.applications && service.applications.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Ideal For</CardTitle>
+                      <CardDescription>
+                        Perfect applications for this service
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {service.applications.map((application, index) => (
+                          <Badge key={index} variant="secondary" className="text-sm">
+                            {application}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {service.customizable && service.customizationOptions && service.customizationOptions.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Customization Options</CardTitle>
+                      <CardDescription>
+                        Available customization choices for your order
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        {service.customizationOptions.map((option, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                            <span className="text-muted-foreground">{option}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* How to Order Section */}
+                <Card className="bg-secondary/30">
+                  <CardHeader>
+                    <CardTitle>How to Order</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ol className="space-y-4">
+                      <li className="flex gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                          1
+                        </div>
+                        <div>
+                          <p className="font-medium mb-1">Request a Quote</p>
+                          <p className="text-sm text-muted-foreground">
+                            Fill out our quote form with your project details
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                          2
+                        </div>
+                        <div>
+                          <p className="font-medium mb-1">Design Approval</p>
+                          <p className="text-sm text-muted-foreground">
+                            Review and approve your design with our team
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                          3
+                        </div>
+                        <div>
+                          <p className="font-medium mb-1">Production</p>
+                          <p className="text-sm text-muted-foreground">
+                            We'll print your order with precision and care
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                          4
+                        </div>
+                        <div>
+                          <p className="font-medium mb-1">Delivery</p>
+                          <p className="text-sm text-muted-foreground">
+                            Pick up or receive your completed order
+                          </p>
+                        </div>
+                      </li>
+                    </ol>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Sidebar */}
@@ -164,7 +260,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <Button asChild className="w-full">
-                      <Link href="/quote">Request Quote</Link>
+                      <Link href={`/quote?service=${service.slug}`}>Request Quote</Link>
                     </Button>
                     <Button asChild variant="outline" className="w-full">
                       <Link href="/contact">Contact Us</Link>

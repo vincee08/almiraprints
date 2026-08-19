@@ -8,28 +8,25 @@ interface TestimonialCardProps {
 
 export function TestimonialCard({ testimonial }: TestimonialCardProps) {
   return (
-    <Card className="h-full">
-      <CardHeader>
-        {testimonial.rating && (
-          <div className="flex gap-1 mb-2">
-            {Array.from({ length: testimonial.rating }).map((_, i) => (
-              <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            ))}
-          </div>
-        )}
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <div className="flex gap-1 mb-2" aria-label={`${testimonial.rating} out of 5 stars`}>
+          {Array.from({ length: testimonial.rating }).map((_, i) => (
+            <Star 
+              key={i} 
+              className="h-4 w-4 fill-primary text-primary" 
+              aria-hidden="true"
+            />
+          ))}
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-muted-foreground italic">
+      <CardContent className="space-y-4 flex-grow flex flex-col justify-between">
+        <p className="text-muted-foreground italic leading-relaxed">
           &ldquo;{testimonial.content}&rdquo;
         </p>
-        <div>
-          <p className="font-semibold">{testimonial.name}</p>
-          {testimonial.role && (
-            <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-          )}
-          {testimonial.company && (
-            <p className="text-sm text-muted-foreground">{testimonial.company}</p>
-          )}
+        <div className="pt-2 border-t">
+          <p className="font-semibold text-foreground">{testimonial.name}</p>
+          <p className="text-sm text-primary font-medium mt-1">{testimonial.service}</p>
         </div>
       </CardContent>
     </Card>

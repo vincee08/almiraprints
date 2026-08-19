@@ -4,69 +4,90 @@
 
 @layer base {
   :root {
-    /* Professional printing business color palette */
+    /* AlmiraPrints Color Palette - Warm, Creative, Professional */
+    /* Core brand colors */
+    --brand-primary-coral: 6 79% 65%;
+    --brand-warm-peach: 30 99% 74%;
+    --brand-soft-peach: 25 87% 78%;
+    --brand-mint-green: 130 28% 80%;
+    --brand-cream: 24 97% 89%;
+
+    /* Semantic color mappings */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 0 0% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 18%;
 
-    /* Primary: Deep blue - professional, trustworthy */
-    --primary: 217 91% 35%;
+    /* Primary: Coral - main brand, CTAs, interactions */
+    --primary: 6 79% 65%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Slate gray - modern, neutral */
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 222 47% 11%;
+    /* Secondary: Warm Peach - secondary accents */
+    --secondary: 30 99% 74%;
+    --secondary-foreground: 0 0% 18%;
 
-    /* Accent: Vibrant cyan - creative, eye-catching */
-    --accent: 199 89% 48%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: Soft Peach - soft backgrounds, highlights */
+    --accent: 25 87% 78%;
+    --accent-foreground: 0 0% 18%;
 
-    --muted: 220 13% 91%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted: Cream - warm backgrounds, sections */
+    --muted: 24 97% 89%;
+    --muted-foreground: 0 0% 40%;
+
+    /* Success/Supporting: Mint Green - success states, balance */
+    --success: 130 28% 80%;
+    --success-foreground: 0 0% 18%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 35%;
+    --border: 25 87% 85%;
+    --input: 0 0% 95%;
+    --ring: 6 79% 65%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 12%;
+    --foreground: 0 0% 98%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 217 91% 35%;
+    /* Primary: Coral (slightly adjusted for dark mode) */
+    --primary: 6 79% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 19% 27%;
+    /* Secondary: Warm Peach (adjusted for dark mode) */
+    --secondary: 30 70% 60%;
     --secondary-foreground: 0 0% 100%;
 
-    --accent: 199 89% 48%;
+    /* Accent: Soft Peach (adjusted for dark mode) */
+    --accent: 25 70% 65%;
     --accent-foreground: 0 0% 100%;
 
-    --muted: 217 19% 27%;
-    --muted-foreground: 215 20% 65%;
+    /* Muted: Warm dark background */
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 70%;
+
+    /* Success: Mint Green (adjusted for dark mode) */
+    --success: 130 25% 60%;
+    --success-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
-    --ring: 217 91% 35%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 6 79% 60%;
   }
 }
 
@@ -113,6 +134,35 @@
 }
 
 @layer utilities {
+  /* Brand color utilities */
+  .bg-coral {
+    background-color: hsl(var(--brand-primary-coral));
+  }
+  
+  .bg-warm-peach {
+    background-color: hsl(var(--brand-warm-peach));
+  }
+  
+  .bg-soft-peach {
+    background-color: hsl(var(--brand-soft-peach));
+  }
+  
+  .bg-mint-green {
+    background-color: hsl(var(--brand-mint-green));
+  }
+  
+  .bg-cream {
+    background-color: hsl(var(--brand-cream));
+  }
+
+  .text-coral {
+    color: hsl(var(--brand-primary-coral));
+  }
+  
+  .border-coral {
+    border-color: hsl(var(--brand-primary-coral));
+  }
+
   /* Container utilities */
   .container-padding {
     @apply px-4 sm:px-6 lg:px-8;
@@ -123,14 +173,14 @@
     @apply py-12 sm:py-16 lg:py-20;
   }
 
-  /* Text gradients for headings */
+  /* Text gradients for headings - Coral to Warm Peach */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
   }
 
   /* Card hover effects */
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary;
   }
 
   /* Backdrop effects */

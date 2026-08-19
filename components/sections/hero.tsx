@@ -1,11 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Printer, Palette, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SITE_CONFIG } from "@/lib/constants";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/20">
+    <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-16 sm:py-20 lg:py-24">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -55,49 +56,62 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* Right Visual */}
+            {/* Right Visual - Featured Projects Gallery */}
             <div className="relative">
               <div className="relative aspect-square max-w-lg mx-auto lg:max-w-none">
                 {/* Decorative gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-secondary rounded-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/20 rounded-3xl" />
                 
-                {/* Floating cards effect */}
-                <div className="absolute inset-0 flex items-center justify-center p-8">
-                  <div className="grid grid-cols-2 gap-4 w-full">
-                    {/* Card 1 */}
-                    <div className="bg-background rounded-xl shadow-lg p-6 transform -rotate-6 hover:rotate-0 transition-transform">
-                      <div className="h-20 bg-gradient-to-br from-primary to-primary/60 rounded-lg mb-3" />
-                      <div className="space-y-2">
-                        <div className="h-2 bg-muted rounded w-3/4" />
-                        <div className="h-2 bg-muted rounded w-1/2" />
-                      </div>
+                {/* Featured Images Grid */}
+                <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-8">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
+                    {/* Image 1 - T-Shirt Printing */}
+                    <div className="relative aspect-square bg-background rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transform -rotate-3 hover:rotate-0 transition-all duration-300 hover:scale-105 hover:shadow-xl group">
+                      <Image
+                        src="/featured/tshirt-printing.jpg"
+                        alt="Custom T-shirt printing project"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 35vw, 20vw"
+                        priority
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     
-                    {/* Card 2 */}
-                    <div className="bg-background rounded-xl shadow-lg p-6 transform rotate-6 hover:rotate-0 transition-transform mt-8">
-                      <div className="h-20 bg-gradient-to-br from-accent to-accent/60 rounded-lg mb-3" />
-                      <div className="space-y-2">
-                        <div className="h-2 bg-muted rounded w-2/3" />
-                        <div className="h-2 bg-muted rounded w-3/4" />
-                      </div>
+                    {/* Image 2 - Personalized Mugs */}
+                    <div className="relative aspect-square bg-background rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transform rotate-3 hover:rotate-0 transition-all duration-300 hover:scale-105 hover:shadow-xl group mt-4 sm:mt-6">
+                      <Image
+                        src="/featured/personalized-mugs.jpg"
+                        alt="Personalized mug printing project"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 35vw, 20vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     
-                    {/* Card 3 */}
-                    <div className="bg-background rounded-xl shadow-lg p-6 transform rotate-3 hover:rotate-0 transition-transform">
-                      <div className="h-20 bg-gradient-to-br from-secondary to-muted rounded-lg mb-3" />
-                      <div className="space-y-2">
-                        <div className="h-2 bg-muted rounded w-1/2" />
-                        <div className="h-2 bg-muted rounded w-2/3" />
-                      </div>
+                    {/* Image 3 - Keychains */}
+                    <div className="relative aspect-square bg-background rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transform rotate-2 hover:rotate-0 transition-all duration-300 hover:scale-105 hover:shadow-xl group -mt-2">
+                      <Image
+                        src="/featured/keychains.jpg"
+                        alt="Personalized keychain printing project"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 35vw, 20vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     
-                    {/* Card 4 */}
-                    <div className="bg-background rounded-xl shadow-lg p-6 transform -rotate-3 hover:rotate-0 transition-transform mt-4">
-                      <div className="h-20 bg-gradient-to-br from-primary/40 to-accent/40 rounded-lg mb-3" />
-                      <div className="space-y-2">
-                        <div className="h-2 bg-muted rounded w-3/4" />
-                        <div className="h-2 bg-muted rounded w-1/2" />
-                      </div>
+                    {/* Image 4 - Tracing & Writing Pads */}
+                    <div className="relative aspect-square bg-background rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transform -rotate-2 hover:rotate-0 transition-all duration-300 hover:scale-105 hover:shadow-xl group mt-2 sm:mt-4">
+                      <Image
+                        src="/featured/tracing&writing-pads.jpg"
+                        alt="Custom tracing and writing pads project"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 35vw, 20vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                 </div>

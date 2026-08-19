@@ -13,18 +13,14 @@ export const SITE_CONFIG = {
 
 export const COMPANY_INFO = {
   legalName: "AlmiraPrints",
-  address: "Your Business Address",
-  city: "Your City",
-  state: "Your State",
-  zipCode: "XXXXX",
+  address: "Purok 2, Quezon, Tagbina, Surigao del Sur",
+  city: "Tagbina",
+  state: "Surigao del Sur",
+  zipCode: "",
   country: "Philippines",
-  phone: "+63 XXX XXX XXXX",
-  email: "contact@example.com",
-  businessHours: {
-    weekdays: "8:00 AM - 6:00 PM",
-    saturday: "8:00 AM - 6:00 PM",
-    sunday: "Closed",
-  },
+  phone: "0992-310-2867",
+  phoneSecondary: "0951-869-5624",
+  email: "almira.ggp@gmail.com",
 };
 
 export const STATS = [

@@ -35,24 +35,24 @@ export const mainNavigation: NavItem[] = [
 export const socialLinks: SocialLink[] = [
   {
     platform: "Facebook",
-    url: "#",
+    url: "https://www.facebook.com/jeraldine.paquinol",
     icon: "Facebook",
   },
   {
     platform: "Instagram",
-    url: "#",
+    url: "https://www.instagram.com/jeraldinepaquinol",
     icon: "Instagram",
   },
   {
     platform: "Messenger",
-    url: "#",
+    url: "https://www.facebook.com/jeraldine.paquinol",
     icon: "MessageCircle",
   },
 ];
 
 export const contactInfo = {
-  address: "Your Business Address",
-  phone: "+63 XXX XXX XXXX",
-  email: "contact@example.com",
-  hours: "Monday - Saturday: 8:00 AM - 6:00 PM",
+  address: "Purok 2, Quezon, Tagbina, Surigao del Sur",
+  phone: "0992-310-2867",
+  phoneSecondary: "0951-869-5624",
+  email: "almira.ggp@gmail.com",
 };

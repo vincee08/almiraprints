@@ -20,6 +20,10 @@ export const quoteFormSchema = z.object({
   deadline: z.string().optional(),
   additionalRequirements: z.string().max(1000).optional(),
   hasDesignFile: z.boolean(),
+  // T-shirt specific fields
+  tshirtSize: z.string().optional(),
+  tshirtColor: z.string().optional(),
+  printLocation: z.string().optional(),
 });
 
 export type ContactFormValues = z.infer<typeof contactFormSchema>;

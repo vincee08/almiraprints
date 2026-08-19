@@ -3,6 +3,15 @@ import { FeatureCard } from "@/components/ui/feature-card";
 import { WHY_CHOOSE_US } from "@/lib/constants";
 
 export function WhyChooseUsSection() {
+  const colorVariants: Array<"coral" | "peach" | "soft-peach" | "mint" | "cream"> = [
+    "soft-peach",
+    "peach",
+    "mint",
+    "cream",
+    "soft-peach",
+    "peach",
+  ];
+
   return (
     <section className="section-padding">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -19,6 +28,7 @@ export function WhyChooseUsSection() {
               title={feature.title}
               description={feature.description}
               icon={feature.icon}
+              variant={colorVariants[index % colorVariants.length]}
             />
           ))}
         </div>

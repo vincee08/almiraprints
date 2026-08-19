@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { MessageCircle, Mail, Phone, MapPin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SITE_CONFIG, COMPANY_INFO } from "@/lib/constants";
@@ -37,25 +38,31 @@ export function Footer() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {/* Company Info */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-                  <span className="text-base font-bold">AP</span>
-                </div>
+              <Link href="/" className="flex items-center space-x-2">
+                <Image
+                  src="/almiraprints-logo.png"
+                  alt="AlmiraPrints"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                />
                 <span className="font-bold text-lg">AlmiraPrints</span>
-              </div>
+              </Link>
               <p className="text-sm text-muted-foreground">
                 {SITE_CONFIG.description}
               </p>
               <div className="flex space-x-4">
                 {socialLinks.map((link) => (
-                  <Link
+                  <a
                     key={link.platform}
                     href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-primary transition-colors"
-                    aria-label={link.platform}
+                    aria-label={`Visit Almira Prints on ${link.platform}`}
                   >
                     {getSocialIcon(link.platform)}
-                  </Link>
+                  </a>
                 ))}
               </div>
             </div>
@@ -122,23 +129,42 @@ export function Footer() {
               <ul className="space-y-3">
                 <li className="flex items-start space-x-3 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span>{contactInfo.address}</span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactInfo.address + ", Philippines")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary transition-colors"
+                  >
+                    {contactInfo.address}
+                  </a>
                 </li>
-                <li className="flex items-center space-x-3 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4 flex-shrink-0" />
-                  <span>{contactInfo.phone}</span>
+                <li className="flex items-start space-x-3 text-sm text-muted-foreground">
+                  <Phone className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div className="space-y-1">
+                    <a
+                      href={`tel:${contactInfo.phone.replace(/[^0-9]/g, '')}`}
+                      className="hover:text-primary transition-colors block"
+                    >
+                      {contactInfo.phone}
+                    </a>
+                    <a
+                      href={`tel:${contactInfo.phoneSecondary.replace(/[^0-9]/g, '')}`}
+                      className="hover:text-primary transition-colors block"
+                    >
+                      {contactInfo.phoneSecondary}
+                    </a>
+                  </div>
                 </li>
                 <li className="flex items-center space-x-3 text-sm text-muted-foreground">
                   <Mail className="h-4 w-4 flex-shrink-0" />
-                  <span>{contactInfo.email}</span>
+                  <a
+                    href={`mailto:${contactInfo.email}`}
+                    className="hover:text-primary transition-colors"
+                  >
+                    {contactInfo.email}
+                  </a>
                 </li>
               </ul>
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-xs text-muted-foreground font-medium mb-1">
-                  Business Hours
-                </p>
-                <p className="text-sm text-muted-foreground">{contactInfo.hours}</p>
-              </div>
             </div>
           </div>
         </div>

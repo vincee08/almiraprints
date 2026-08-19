@@ -10,6 +10,10 @@ export interface Service {
   benefits?: string[];
   specifications?: ServiceSpecification[];
   priceStarting?: string;
+  customizable?: boolean;
+  customizationOptions?: string[];
+  applications?: string[];
+  subServices?: Service[];
 }
 
 export interface ServiceCategory {

@@ -57,7 +57,7 @@ export function ContactForm() {
       <Card>
         <CardContent className="pt-6">
           <div className="text-center space-y-4 py-8">
-            <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto" />
+            <CheckCircle2 className="h-16 w-16 text-success mx-auto" />
             <div>
               <h3 className="text-xl font-semibold mb-2">Message Sent!</h3>
               <p className="text-muted-foreground">

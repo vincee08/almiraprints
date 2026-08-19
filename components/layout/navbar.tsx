@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,12 +52,18 @@ export function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center space-x-2 font-bold text-xl"
+            className="flex items-center space-x-2 shrink-0"
+            aria-label="AlmiraPrints home"
           >
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-              <span className="text-sm font-bold">AP</span>
-            </div>
-            <span className="hidden sm:inline-block">
+            <Image
+              src="/almiraprints-logo.png"
+              alt="AlmiraPrints"
+              width={40}
+              height={40}
+              className="object-contain"
+              priority
+            />
+            <span className="hidden sm:inline-block font-bold text-xl">
               AlmiraPrints
             </span>
           </Link>
@@ -101,7 +108,16 @@ export function Navbar() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <SheetHeader>
-                  <SheetTitle>AlmiraPrints</SheetTitle>
+                  <SheetTitle className="flex items-center space-x-2">
+                    <Image
+                      src="/almiraprints-logo.png"
+                      alt="AlmiraPrints"
+                      width={32}
+                      height={32}
+                      className="object-contain"
+                    />
+                    <span>AlmiraPrints</span>
+                  </SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col space-y-4 mt-8">
                   {mainNavigation.map((item) => (

@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
 import { PortfolioCard } from "@/components/portfolio/portfolio-card";
-import { portfolioItems } from "@/data/portfolio";
+import { featuredPortfolioItems } from "@/data/portfolio";
 
 export function PortfolioSection() {
   return (
@@ -16,7 +16,7 @@ export function PortfolioSection() {
         />
 
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {portfolioItems.map((item) => (
+          {featuredPortfolioItems.map((item) => (
             <PortfolioCard key={item.id} item={item} />
           ))}
         </div>

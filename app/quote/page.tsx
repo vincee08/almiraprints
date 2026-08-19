@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { FileText, CheckCircle2, MessageCircle, Truck } from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
@@ -74,7 +75,17 @@ export default function QuotePage() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Form */}
             <div className="lg:col-span-2">
-              <QuoteForm />
+              <Suspense fallback={
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              }>
+                <QuoteForm />
+              </Suspense>
             </div>
 
             {/* Sidebar */}

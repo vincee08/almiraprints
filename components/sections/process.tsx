@@ -20,6 +20,7 @@ export function ProcessSection() {
               title={step.title}
               description={step.description}
               isLast={index === PROCESS_STEPS.length - 1}
+              colorIndex={index}
             />
           ))}
         </div>
