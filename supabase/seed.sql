@@ -1,0 +1,1 @@
+-- No customer or staff data is seeded. Create staff explicitly with npm run staff:create.
