@@ -23,11 +23,13 @@ export function ContactForm({ deliveryAvailable = false }: { deliveryAvailable?:
   });
   const [submissionError, setSubmissionError] = useState("");
   const [reference, setReference] = useState("");
+  const [ready, setReady] = useState(false);
   const errorPanel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (reference) document.getElementById("submission-success")?.focus();
     else if (submissionError) errorPanel.current?.focus();
   }, [reference, submissionError]);
+  useEffect(() => setReady(true), []);
   const field = (name: keyof ContactFormValues) => ({
     id: name, "aria-invalid": Boolean(errors[name]), "aria-describedby": errors[name] ? name + "-error" : undefined,
   });
@@ -53,7 +55,7 @@ export function ContactForm({ deliveryAvailable = false }: { deliveryAvailable?:
         <DeliveryNotice available={deliveryAvailable} />
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate aria-labelledby="contact-form-heading" aria-busy={isSubmitting} className="space-y-5">
+        <form method="post" onSubmit={handleSubmit(onSubmit)} noValidate aria-labelledby="contact-form-heading" aria-busy={isSubmitting} className="space-y-5">
           <FormField id="fullName" label="Full name" required error={errors.fullName?.message}>
             <Input {...register("fullName")} {...field("fullName")} autoComplete="name" aria-required="true" placeholder="Your full name" />
           </FormField>
@@ -76,7 +78,7 @@ export function ContactForm({ deliveryAvailable = false }: { deliveryAvailable?:
           </FormField>
           {Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl bg-destructive/5 p-4 text-sm text-destructive">Please check the highlighted fields before continuing.</p>}
           {submissionError && <div ref={errorPanel} tabIndex={-1} role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{submissionError}</div>}
-          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !deliveryAvailable}>
+          <Button type="submit" size="lg" className="w-full" disabled={!ready || isSubmitting || !deliveryAvailable}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             {isSubmitting ? "Sending message…" : "Send message"}
           </Button>

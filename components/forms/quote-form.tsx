@@ -40,6 +40,7 @@ export function QuoteForm({ initialServiceSlug, initialCategorySlug, initialProj
   const [reference, setReference] = useState("");
   const [notification, setNotification] = useState("");
   const [step, setStep] = useState("");
+  const [ready, setReady] = useState(false);
   const submission = useRef<{ signature: string; key: string } | null>(null);
   const website = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -53,6 +54,7 @@ export function QuoteForm({ initialServiceSlug, initialCategorySlug, initialProj
     if (reference) document.getElementById("submission-success")?.focus();
     else if (submissionError) errorPanel.current?.focus();
   }, [reference, submissionError]);
+  useEffect(() => setReady(true), []);
 
   const field = (name: keyof QuoteFormValues) => ({
     id: name,
@@ -108,7 +110,7 @@ export function QuoteForm({ initialServiceSlug, initialCategorySlug, initialProj
         <DeliveryNotice available={deliveryAvailable} />
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate aria-labelledby="quote-form-heading" className="space-y-8" aria-busy={isSubmitting}>
+        <form method="post" onSubmit={handleSubmit(onSubmit)} noValidate aria-labelledby="quote-form-heading" className="space-y-8" aria-busy={isSubmitting}>
           <fieldset className="space-y-5">
             <legend className="mb-4 text-base font-semibold">1. Your contact details</legend>
             <FormField id="customerName" label="Full name" required error={errors.customerName?.message}>
@@ -212,7 +214,7 @@ export function QuoteForm({ initialServiceSlug, initialCategorySlug, initialProj
           {submissionError && <div ref={errorPanel} tabIndex={-1} role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{submissionError}</div>}
           <div className="absolute -left-[10000px]" aria-hidden="true"><label htmlFor="quote-website">Leave this blank</label><input id="quote-website" ref={website} name="website" tabIndex={-1} autoComplete="off" /></div>
           {step && <p role="status" className="text-sm text-muted-foreground">{step}</p>}
-          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !deliveryAvailable || Boolean(fileError)}>
+          <Button type="submit" size="lg" className="w-full" disabled={!ready || isSubmitting || !deliveryAvailable || Boolean(fileError)}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             {isSubmitting ? "Saving request…" : "Send quote request"}
           </Button>
