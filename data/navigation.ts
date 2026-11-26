@@ -43,11 +43,6 @@ export const socialLinks: SocialLink[] = [
     url: "https://www.instagram.com/jeraldinepaquinol",
     icon: "Instagram",
   },
-  {
-    platform: "Messenger",
-    url: "https://www.facebook.com/jeraldine.paquinol",
-    icon: "MessageCircle",
-  },
 ];
 
 export const contactInfo = {

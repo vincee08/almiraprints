@@ -1,155 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { mainNavigation } from "@/data/navigation";
-import { SITE_CONFIG } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const isActive = (href: string) => {
-    if (href === "/") {
-      return pathname === "/";
-    }
-    return pathname.startsWith(href);
-  };
-
+  const active = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const quoteHref = pathname.startsWith("/services/") ? "/quote?service=" + pathname.split("/")[2] : "/quote";
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 w-full border-b transition-all duration-300",
-        isScrolled
-          ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm"
-          : "bg-background"
-      )}
-    >
+    <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/95 backdrop-blur">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center space-x-2 shrink-0"
-            aria-label="AlmiraPrints home"
-          >
-            <Image
-              src="/almiraprints-logo.png"
-              alt="AlmiraPrints"
-              width={40}
-              height={40}
-              className="object-contain"
-              priority
-            />
-            <span className="hidden sm:inline-block font-bold text-xl">
-              AlmiraPrints
-            </span>
+        <div className="flex h-16 items-center justify-between gap-4 sm:h-20">
+          <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="AlmiraPrints home">
+            <Image src="/almiraprints-logo.png" alt="" width={40} height={40} className="object-contain" priority />
+            <span className="text-lg font-bold tracking-tight">AlmiraPrints<span className="text-primary">.</span></span>
           </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            {mainNavigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  isActive(item.href)
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+          <nav aria-label="Main navigation" className="hidden items-center gap-0.5 md:flex lg:gap-1">
+            {mainNavigation.map(item => <Link key={item.href} href={item.href} aria-current={active(item.href) ? "page" : undefined} className={cn("inline-flex min-h-11 items-center rounded-full px-3 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-primary", active(item.href) ? "bg-accent text-primary" : "text-muted-foreground")}>{item.label}</Link>)}
           </nav>
-
-          {/* CTA Button - Desktop */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Button asChild size="sm">
-              <Link href="/quote">Get a Quote</Link>
-            </Button>
-          </div>
-
-          {/* Mobile Menu */}
+          <div className="hidden md:block"><Button asChild size="sm"><Link href={quoteHref}>Get a quote</Link></Button></div>
           <div className="flex md:hidden">
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden"
-                  aria-label="Toggle menu"
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                <SheetHeader>
-                  <SheetTitle className="flex items-center space-x-2">
-                    <Image
-                      src="/almiraprints-logo.png"
-                      alt="AlmiraPrints"
-                      width={32}
-                      height={32}
-                      className="object-contain"
-                    />
-                    <span>AlmiraPrints</span>
-                  </SheetTitle>
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild><Button variant="ghost" size="icon" aria-label="Open navigation menu"><Menu aria-hidden="true" /></Button></SheetTrigger>
+              <SheetContent side="right" className="w-[min(360px,100vw)] overflow-y-auto pb-10">
+                <SheetHeader className="text-left">
+                  <SheetTitle className="text-xl">AlmiraPrints</SheetTitle>
+                  <SheetDescription>Find your next printing project.</SheetDescription>
                 </SheetHeader>
-                <nav className="flex flex-col space-y-4 mt-8">
-                  {mainNavigation.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={cn(
-                        "text-base font-medium transition-colors hover:text-primary px-4 py-2 rounded-md",
-                        isActive(item.href)
-                          ? "text-primary bg-primary/10"
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      <div>{item.label}</div>
-                      {item.description && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {item.description}
-                        </div>
-                      )}
-                    </Link>
-                  ))}
-                  <div className="pt-4 border-t">
-                    <Button asChild className="w-full">
-                      <Link
-                        href="/quote"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Get a Quote
-                      </Link>
-                    </Button>
-                  </div>
+                <nav aria-label="Mobile navigation" className="mt-6 flex flex-col gap-2">
+                  {mainNavigation.map(item => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} aria-current={active(item.href) ? "page" : undefined} className={cn("rounded-xl px-4 py-3 text-base font-medium", active(item.href) ? "bg-primary/5 text-primary" : "text-foreground hover:bg-muted")}>{item.label}</Link>)}
+                  <Button asChild className="mt-4"><Link href={quoteHref} onClick={() => setOpen(false)}>Get a quote</Link></Button>
                 </nav>
               </SheetContent>
             </Sheet>

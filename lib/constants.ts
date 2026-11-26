@@ -1,13 +1,14 @@
+import { serviceCategories, services } from "@/data/services";
+
 export const SITE_CONFIG = {
   name: "AlmiraPrints",
-  tagline: "Print Your Ideas. Promote Your Business.",
-  description: "Professional printing and advertising solutions designed to help businesses, organizations, and individuals make a lasting impression.",
+  tagline: "Made personal. Printed with care.",
+  description: "Personalized gifts, party prints, custom shirts, calendars and signage from AlmiraPrints in Tagbina, Surigao del Sur.",
   url: "https://almiraprints.com",
-  ogImage: "/og-image.png",
+  ogImage: "/almiraprints-logo.png",
   links: {
-    facebook: "#",
-    instagram: "#",
-    messenger: "#",
+    facebook: "https://www.facebook.com/jeraldine.paquinol",
+    instagram: "https://www.instagram.com/jeraldinepaquinol",
   },
 };
 
@@ -26,19 +27,19 @@ export const COMPANY_INFO = {
 export const STATS = [
   {
     label: "Service Categories",
-    value: "10+",
+    value: String(serviceCategories.length),
   },
   {
-    label: "Fast Turnaround",
-    value: "24-48h",
+    label: "Printing Services",
+    value: String(services.length),
   },
   {
-    label: "Quality Guarantee",
-    value: "100%",
+    label: "Based in Surigao del Sur",
+    value: "Tagbina",
   },
   {
-    label: "Custom Solutions",
-    value: "Available",
+    label: "Made Around Your Idea",
+    value: "Custom",
   },
 ];
 
@@ -49,8 +50,8 @@ export const WHY_CHOOSE_US = [
     icon: "CheckCircle2",
   },
   {
-    title: "Fast Turnaround",
-    description: "Efficient production workflows designed to meet your project deadlines.",
+    title: "Project Planning",
+    description: "Discuss your preferred date and confirm the production schedule before ordering.",
     icon: "Clock",
   },
   {
@@ -93,7 +94,7 @@ export const PROCESS_STEPS = [
   },
   {
     step: "04",
-    title: "Delivery / Pickup",
-    description: "Finished materials are prepared for pickup or delivery to your location.",
+    title: "Collection / Delivery",
+    description: "Confirm collection or delivery arrangements, timing and any fees with the shop.",
   },
 ];

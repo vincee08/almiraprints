@@ -13,43 +13,43 @@
     --brand-cream: 24 97% 89%;
 
     /* Semantic color mappings */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 18%;
+    --background: 36 40% 99%;
+    --foreground: 16 18% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 18%;
+    --card-foreground: 16 18% 15%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 18%;
 
     /* Primary: Coral - main brand, CTAs, interactions */
-    --primary: 6 79% 65%;
+    --primary: 6 63% 40%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Warm Peach - secondary accents */
-    --secondary: 30 99% 74%;
+    --secondary: 30 90% 85%;
     --secondary-foreground: 0 0% 18%;
 
     /* Accent: Soft Peach - soft backgrounds, highlights */
-    --accent: 25 87% 78%;
+    --accent: 6 70% 94%;
     --accent-foreground: 0 0% 18%;
 
     /* Muted: Cream - warm backgrounds, sections */
-    --muted: 24 97% 89%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 32 45% 95%;
+    --muted-foreground: 16 8% 37%;
 
     /* Success/Supporting: Mint Green - success states, balance */
-    --success: 130 28% 80%;
-    --success-foreground: 0 0% 18%;
+    --success: 150 48% 28%;
+    --success-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 38%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 25 87% 85%;
-    --input: 0 0% 95%;
-    --ring: 6 79% 65%;
+    --border: 25 30% 85%;
+    --input: 20 12% 55%;
+    --ring: 6 63% 40%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
   }
 
   .dark {
@@ -63,16 +63,16 @@
     --popover-foreground: 0 0% 98%;
 
     /* Primary: Coral (slightly adjusted for dark mode) */
-    --primary: 6 79% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 6 79% 74%;
+    --primary-foreground: 0 0% 12%;
 
     /* Secondary: Warm Peach (adjusted for dark mode) */
     --secondary: 30 70% 60%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 0 0% 12%;
 
     /* Accent: Soft Peach (adjusted for dark mode) */
     --accent: 25 70% 65%;
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 0 0% 12%;
 
     /* Muted: Warm dark background */
     --muted: 0 0% 20%;
@@ -80,14 +80,14 @@
 
     /* Success: Mint Green (adjusted for dark mode) */
     --success: 130 25% 60%;
-    --success-foreground: 0 0% 100%;
+    --success-foreground: 0 0% 12%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 85% 75%;
+    --destructive-foreground: 0 0% 12%;
 
     --border: 0 0% 25%;
     --input: 0 0% 25%;
-    --ring: 6 79% 60%;
+    --ring: 6 79% 74%;
   }
 }
 
@@ -99,6 +99,7 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    line-height: 1.6;
   }
 
   /* Typography improvements */
@@ -107,24 +108,25 @@
   }
 
   h1 {
-    @apply text-4xl sm:text-5xl md:text-6xl;
+    @apply text-3xl leading-tight sm:text-4xl lg:text-5xl;
   }
 
   h2 {
-    @apply text-3xl sm:text-4xl md:text-5xl;
+    @apply text-2xl leading-tight sm:text-3xl;
   }
 
   h3 {
-    @apply text-2xl sm:text-3xl md:text-4xl;
+    @apply text-xl leading-snug;
   }
 
   h4 {
-    @apply text-xl sm:text-2xl;
+    @apply text-lg;
   }
 
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
   }
 
   /* Focus visible for accessibility */
@@ -170,7 +172,21 @@
 
   /* Section spacing */
   .section-padding {
-    @apply py-12 sm:py-16 lg:py-20;
+    @apply py-10 sm:py-14 lg:py-16;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.16em] text-primary;
+  }
+
+  .page-intro {
+    @apply border-b border-border/60 bg-muted/60 py-12 sm:py-16;
+  }
+
+  .hero-surface {
+    background:
+      radial-gradient(circle at 88% 10%, hsl(var(--secondary) / 0.55), transparent 32%),
+      linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted)));
   }
 
   /* Text gradients for headings - Coral to Warm Peach */

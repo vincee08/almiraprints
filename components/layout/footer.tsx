@@ -2,8 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { MessageCircle, Mail, Phone, MapPin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { SITE_CONFIG, COMPANY_INFO } from "@/lib/constants";
-import { mainNavigation, socialLinks, contactInfo } from "@/data/navigation";
+import { SITE_CONFIG } from "@/lib/constants";
+import { socialLinks, contactInfo } from "@/data/navigation";
 import { serviceCategories } from "@/data/services";
 
 export function Footer() {
@@ -35,13 +35,13 @@ export function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="py-12 sm:py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-12">
             {/* Company Info */}
-            <div className="space-y-4">
+            <div className="col-span-2 space-y-3 lg:col-span-1">
               <Link href="/" className="flex items-center space-x-2">
                 <Image
                   src="/almiraprints-logo.png"
-                  alt="AlmiraPrints"
+                  alt=""
                   width={40}
                   height={40}
                   className="object-contain"
@@ -51,14 +51,14 @@ export function Footer() {
               <p className="text-sm text-muted-foreground">
                 {SITE_CONFIG.description}
               </p>
-              <div className="flex space-x-4">
+              <div className="flex gap-2">
                 {socialLinks.map((link) => (
                   <a
                     key={link.platform}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-primary transition-colors"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-primary transition-colors"
                     aria-label={`Visit Almira Prints on ${link.platform}`}
                   >
                     {getSocialIcon(link.platform)}
@@ -103,6 +103,7 @@ export function Footer() {
                     Contact
                   </Link>
                 </li>
+                <li><Link href="/staff/sign-in" className="text-sm text-muted-foreground hover:text-primary transition-colors">Staff sign-in</Link></li>
               </ul>
             </div>
 
@@ -110,7 +111,7 @@ export function Footer() {
             <div>
               <h3 className="font-semibold text-sm mb-4">Services</h3>
               <ul className="space-y-3">
-                {serviceCategories.slice(0, 4).map((category) => (
+                {serviceCategories.map((category) => (
                   <li key={category.id}>
                     <Link
                       href={`/services?category=${category.slug}`}
@@ -124,7 +125,7 @@ export function Footer() {
             </div>
 
             {/* Contact Info */}
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <h3 className="font-semibold text-sm mb-4">Contact Us</h3>
               <ul className="space-y-3">
                 <li className="flex items-start space-x-3 text-sm text-muted-foreground">

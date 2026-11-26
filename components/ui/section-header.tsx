@@ -5,6 +5,7 @@ interface SectionHeaderProps {
   description?: string;
   centered?: boolean;
   className?: string;
+  as?: "h1" | "h2";
 }
 
 export function SectionHeader({
@@ -12,6 +13,7 @@ export function SectionHeader({
   description,
   centered = false,
   className,
+  as: Heading = "h2",
 }: SectionHeaderProps) {
   return (
     <div className={cn(
@@ -19,11 +21,11 @@ export function SectionHeader({
       centered && "text-center max-w-3xl mx-auto",
       className
     )}>
-      <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+      <Heading className="text-3xl sm:text-4xl font-bold tracking-tight">
         {title}
-      </h2>
+      </Heading>
       {description && (
-        <p className="text-lg text-muted-foreground">
+        <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
           {description}
         </p>
       )}

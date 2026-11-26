@@ -21,9 +21,10 @@ export default function FAQPage() {
   return (
     <MainLayout>
       {/* Header */}
-      <section className="bg-gradient-to-b from-secondary/30 to-background py-16 sm:py-20">
+      <section className="page-intro">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
+            as="h1"
             title="Frequently Asked Questions"
             description="Find answers to common questions about our printing services"
             centered
@@ -60,7 +61,7 @@ export default function FAQPage() {
               Still Have Questions?
             </h2>
             <p className="text-lg text-muted-foreground">
-              Can't find the answer you're looking for? Our team is here to help.
+                Still have a question? Talk to the shop about your project.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg">

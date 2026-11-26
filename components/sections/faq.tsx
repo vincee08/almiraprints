@@ -22,7 +22,7 @@ export function FAQSection() {
 
         <div className="mt-12 max-w-3xl mx-auto">
           <Accordion type="single" collapsible className="w-full">
-            {faqs.slice(0, 6).map((faq) => (
+            {faqs.slice(0, 3).map((faq) => (
               <AccordionItem key={faq.id} value={faq.id}>
                 <AccordionTrigger className="text-left">
                   {faq.question}

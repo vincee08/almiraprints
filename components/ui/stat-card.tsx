@@ -8,9 +8,9 @@ interface StatCardProps {
 export function StatCard({ label, value }: StatCardProps) {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent className="p-4 sm:p-6">
         <div className="text-center space-y-2">
-          <p className="text-3xl sm:text-4xl font-bold text-primary">
+          <p className="text-xl sm:text-3xl font-bold text-primary">
             {value}
           </p>
           <p className="text-sm text-muted-foreground font-medium">

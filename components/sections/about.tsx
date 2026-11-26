@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Target, Eye, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function AboutSection() {
   return (
@@ -12,10 +12,10 @@ export function AboutSection() {
           <div className="space-y-6">
             <div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-                About Your Printing Business
+                About AlmiraPrints
               </h2>
               <p className="text-lg text-muted-foreground">
-                Your Printing Business is a professional printing and advertising service provider focused on delivering quality print solutions for businesses, organizations, events, and individuals.
+                AlmiraPrints is a personalized printing shop in Tagbina, Surigao del Sur, creating gifts, party prints, shirts, calendars and signage for everyday ideas and special occasions.
               </p>
             </div>
 

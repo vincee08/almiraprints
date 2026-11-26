@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#1e40af",
+  "theme_color": "#a63226",
   "icons": [
     {
       "src": "/almiraprints-logo.png",

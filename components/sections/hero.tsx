@@ -1,124 +1,58 @@
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Printer, Palette, Zap } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SITE_CONFIG } from "@/lib/constants";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-16 sm:py-20 lg:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left Content */}
-            <div className="space-y-8 text-center lg:text-left">
-              <div className="space-y-4">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
-                  {SITE_CONFIG.tagline}
-                </h1>
-                <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
-                  {SITE_CONFIG.description}
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button asChild size="lg" className="text-base">
-                  <Link href="/services">
-                    Explore Services
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="text-base">
-                  <Link href="/quote">Request a Quote</Link>
-                </Button>
-              </div>
-
-              {/* Trust indicators */}
-              <div className="flex flex-wrap gap-6 justify-center lg:justify-start pt-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Printer className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-muted-foreground">Professional Quality</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Zap className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-muted-foreground">Fast Turnaround</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Palette className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-muted-foreground">Custom Solutions</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Visual - Featured Projects Gallery */}
-            <div className="relative">
-              <div className="relative aspect-square max-w-lg mx-auto lg:max-w-none">
-                {/* Decorative gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/20 rounded-3xl" />
-                
-                {/* Featured Images Grid */}
-                <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-8">
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
-                    {/* Image 1 - T-Shirt Printing */}
-                    <div className="relative aspect-square bg-background rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transform -rotate-3 hover:rotate-0 transition-all duration-300 hover:scale-105 hover:shadow-xl group">
-                      <Image
-                        src="/featured/tshirt-printing.jpg"
-                        alt="Custom T-shirt printing project"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 35vw, 20vw"
-                        priority
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    
-                    {/* Image 2 - Personalized Mugs */}
-                    <div className="relative aspect-square bg-background rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transform rotate-3 hover:rotate-0 transition-all duration-300 hover:scale-105 hover:shadow-xl group mt-4 sm:mt-6">
-                      <Image
-                        src="/featured/personalized-mugs.jpg"
-                        alt="Personalized mug printing project"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 35vw, 20vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    
-                    {/* Image 3 - Keychains */}
-                    <div className="relative aspect-square bg-background rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transform rotate-2 hover:rotate-0 transition-all duration-300 hover:scale-105 hover:shadow-xl group -mt-2">
-                      <Image
-                        src="/featured/keychains.jpg"
-                        alt="Personalized keychain printing project"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 35vw, 20vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    
-                    {/* Image 4 - Tracing & Writing Pads */}
-                    <div className="relative aspect-square bg-background rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transform -rotate-2 hover:rotate-0 transition-all duration-300 hover:scale-105 hover:shadow-xl group mt-2 sm:mt-4">
-                      <Image
-                        src="/featured/tracing&writing-pads.jpg"
-                        alt="Custom tracing and writing pads project"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 35vw, 20vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <section className="hero-surface overflow-hidden border-b">
+      <div className="container mx-auto grid items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-16 lg:px-8 lg:py-24">
+        <div className="max-w-2xl">
+          <p className="eyebrow inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/80 px-4 py-2">
+            <MapPin className="h-4 w-4" aria-hidden="true" />
+            Your local print studio in Tagbina
+          </p>
+          <h1 className="mt-6 max-w-2xl text-[clamp(3rem,7vw,5.75rem)] font-bold leading-[1.02] tracking-[-0.055em]">
+            Your idea,{" "}<br />
+            <span className="text-primary">beautifully printed.</span>
+          </h1>
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            From party favors and custom shirts to gifts, calendars, and signs, we make the details feel like yours.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button asChild size="lg" className="w-full sm:w-auto">
+              <Link href="#printing-categories">Explore printing services <ArrowRight aria-hidden="true" /></Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+              <Link href="/quote">Request a custom quote <ArrowUpRight aria-hidden="true" /></Link>
+            </Button>
           </div>
+          <p className="mt-6 text-sm text-muted-foreground">
+            Have a reference photo or a rough idea? That is enough to get started.
+          </p>
         </div>
+
+        <Link href="/portfolio" className="group relative block min-w-0 rounded-[1.75rem] border border-border/80 bg-card p-2 shadow-[0_24px_70px_-35px_hsl(var(--foreground)/0.35)] transition-transform duration-300 motion-safe:hover:-translate-y-1 sm:p-3">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-[1.25rem] bg-muted">
+            <Image
+              src="/projects/gable-box-loot-bag-party-hat.jpg"
+              alt="Examples of AlmiraPrints personalized party boxes, loot bags, and party hats"
+              fill
+              priority
+              sizes="(max-width: 1023px) 94vw, 44vw"
+              className="object-cover"
+            />
+          </div>
+          <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-4">
+            <div>
+              <p className="eyebrow text-[0.65rem]">Real work, real celebrations</p>
+              <p className="mt-1 text-sm font-semibold text-foreground sm:text-base">See what we can make together</p>
+            </div>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+              <ArrowUpRight className="h-5 w-5" aria-hidden="true" />
+            </span>
+          </div>
+        </Link>
       </div>
     </section>
   );

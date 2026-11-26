@@ -48,7 +48,7 @@ export function generateSEO({
   };
 }
 
-export function generateStructuredData(type: "Organization" | "WebSite" | "Service", data: any) {
+export function generateStructuredData(type: "Organization" | "WebSite" | "Service", data: Record<string, unknown>) {
   const baseData = {
     "@context": "https://schema.org",
   };
@@ -60,7 +60,7 @@ export function generateStructuredData(type: "Organization" | "WebSite" | "Servi
         "@type": "Organization",
         name: SITE_CONFIG.name,
         url: SITE_CONFIG.url,
-        logo: `${SITE_CONFIG.url}/logo.png`,
+        logo: `${SITE_CONFIG.url}/almiraprints-logo.png`,
         ...data,
       };
 

@@ -1,189 +1,86 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { contactFormSchema, ContactFormValues } from "@/lib/validations";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { FormField, selectClassName } from "./form-field";
+import { DeliveryNotice, EmailFallback, SubmissionSuccess } from "./submission-feedback";
+import { contactFormSchema, type ContactFormValues } from "@/lib/validations";
+import { formatContact } from "@/lib/inquiry-content";
+import { SubmissionError, submitInquiry } from "@/lib/submit-inquiry";
 import { serviceCategories } from "@/data/services";
 
-export function ContactForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+const defaults: ContactFormValues = { fullName: "", email: "", phone: "", serviceType: "", message: "" };
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    reset,
-  } = useForm<ContactFormValues>({
-    resolver: zodResolver(contactFormSchema),
+export function ContactForm({ deliveryAvailable = false }: { deliveryAvailable?: boolean }) {
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setError, reset, getValues } = useForm<ContactFormValues>({
+    resolver: zodResolver(contactFormSchema), defaultValues: defaults, mode: "onBlur",
   });
-
-  const onSubmit = async (data: ContactFormValues) => {
-    setIsSubmitting(true);
-
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    console.log("Contact form data:", data);
-    
-    setIsSubmitting(false);
-    setIsSuccess(true);
-
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setIsSuccess(false);
-      reset();
-    }, 3000);
-  };
-
-  if (isSuccess) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center space-y-4 py-8">
-            <CheckCircle2 className="h-16 w-16 text-success mx-auto" />
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Message Sent!</h3>
-              <p className="text-muted-foreground">
-                Thank you for contacting us. We'll get back to you as soon as possible.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const [submissionError, setSubmissionError] = useState("");
+  const [reference, setReference] = useState("");
+  const errorPanel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (reference) document.getElementById("submission-success")?.focus();
+    else if (submissionError) errorPanel.current?.focus();
+  }, [reference, submissionError]);
+  const field = (name: keyof ContactFormValues) => ({
+    id: name, "aria-invalid": Boolean(errors[name]), "aria-describedby": errors[name] ? name + "-error" : undefined,
+  });
+  async function onSubmit(data: ContactFormValues) {
+    setSubmissionError("");
+    if (!deliveryAvailable) { setSubmissionError("Online sending is unavailable. Please prepare an email or call the shop. Nothing has been sent."); return; }
+    try { setReference(await submitInquiry("contact", JSON.stringify(data))); }
+    catch (error) {
+      const failure = error instanceof SubmissionError ? error : new SubmissionError("We could not confirm sending your message. Please call or email us.");
+      Object.entries(failure.fieldErrors).forEach(([name, message]) => {
+        if (name in data) setError(name as keyof ContactFormValues, { type: "server", message });
+      });
+      setSubmissionError(failure.message + (failure.reference ? " Reference: " + failure.reference : ""));
+    }
   }
-
+  if (reference) return <SubmissionSuccess reference={reference} onNewRequest={() => { setReference(""); setSubmissionError(""); reset(defaults); }} />;
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Send Us a Message</CardTitle>
-        <CardDescription>
-          Fill out the form below and we'll respond to your inquiry
-        </CardDescription>
+    <Card id="contact-form" className="scroll-mt-24">
+      <CardHeader className="space-y-3">
+        <p className="eyebrow">Let’s talk printing</p>
+        <h2 id="contact-form-heading" className="text-2xl font-semibold">Send us a message</h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">Ask about a product, your artwork or an existing project. Fields marked * are required.</p>
+        <DeliveryNotice available={deliveryAvailable} />
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Full Name */}
-          <div className="space-y-2">
-            <Label htmlFor="fullName">
-              Full Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="fullName"
-              placeholder="Your full name"
-              {...register("fullName")}
-              aria-invalid={errors.fullName ? "true" : "false"}
-            />
-            {errors.fullName && (
-              <p className="text-sm text-destructive">{errors.fullName.message}</p>
-            )}
+        <form onSubmit={handleSubmit(onSubmit)} noValidate aria-labelledby="contact-form-heading" aria-busy={isSubmitting} className="space-y-5">
+          <FormField id="fullName" label="Full name" required error={errors.fullName?.message}>
+            <Input {...register("fullName")} {...field("fullName")} autoComplete="name" aria-required="true" placeholder="Your full name" />
+          </FormField>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormField id="email" label="Email address" required error={errors.email?.message}>
+              <Input {...register("email")} {...field("email")} type="email" autoComplete="email" aria-required="true" placeholder="you@example.com" />
+            </FormField>
+            <FormField id="phone" label="Phone number" required error={errors.phone?.message}>
+              <Input {...register("phone")} {...field("phone")} type="tel" autoComplete="tel" aria-required="true" placeholder="09XX XXX XXXX" />
+            </FormField>
           </div>
-
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email">
-              Email Address <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your.email@example.com"
-              {...register("email")}
-              aria-invalid={errors.email ? "true" : "false"}
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div className="space-y-2">
-            <Label htmlFor="phone">
-              Phone Number <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+63 XXX XXX XXXX"
-              {...register("phone")}
-              aria-invalid={errors.phone ? "true" : "false"}
-            />
-            {errors.phone && (
-              <p className="text-sm text-destructive">{errors.phone.message}</p>
-            )}
-          </div>
-
-          {/* Service Type */}
-          <div className="space-y-2">
-            <Label htmlFor="serviceType">
-              Service Type <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              onValueChange={(value) => setValue("serviceType", value)}
-              defaultValue={watch("serviceType")}
-            >
-              <SelectTrigger id="serviceType" aria-invalid={errors.serviceType ? "true" : "false"}>
-                <SelectValue placeholder="Select a service category" />
-              </SelectTrigger>
-              <SelectContent>
-                {serviceCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value="General Inquiry">General Inquiry</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.serviceType && (
-              <p className="text-sm text-destructive">{errors.serviceType.message}</p>
-            )}
-          </div>
-
-          {/* Message */}
-          <div className="space-y-2">
-            <Label htmlFor="message">
-              Message <span className="text-destructive">*</span>
-            </Label>
-            <Textarea
-              id="message"
-              placeholder="Tell us about your printing needs..."
-              rows={5}
-              {...register("message")}
-              aria-invalid={errors.message ? "true" : "false"}
-            />
-            {errors.message && (
-              <p className="text-sm text-destructive">{errors.message.message}</p>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              "Send Message"
-            )}
+          <FormField id="serviceType" label="What can we help with?" required error={errors.serviceType?.message}>
+            <select {...register("serviceType")} {...field("serviceType")} aria-required="true" className={selectClassName}>
+              <option value="">Choose a topic</option><option value="General Inquiry">General inquiry</option>
+              {serviceCategories.map(category => <option key={category.id} value={category.name}>{category.name}</option>)}
+            </select>
+          </FormField>
+          <FormField id="message" label="Your message" required error={errors.message?.message}>
+            <Textarea {...register("message")} {...field("message")} aria-required="true" rows={5} placeholder="Tell us what you need…" />
+          </FormField>
+          {Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl bg-destructive/5 p-4 text-sm text-destructive">Please check the highlighted fields before continuing.</p>}
+          {submissionError && <div ref={errorPanel} tabIndex={-1} role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{submissionError}</div>}
+          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !deliveryAvailable}>
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {isSubmitting ? "Sending message…" : "Send message"}
           </Button>
+          {(!deliveryAvailable || submissionError) && <EmailFallback subject="AlmiraPrints customer inquiry" getBody={() => formatContact(getValues())} />}
         </form>
       </CardContent>
     </Card>

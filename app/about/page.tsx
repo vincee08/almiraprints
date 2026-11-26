@@ -1,148 +1,47 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Target, Eye, Award, Heart, Lightbulb, Shield } from "lucide-react";
+import { Heart, Palette, MapPin, MessageCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { SectionHeader } from "@/components/ui/section-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { COMPANY_INFO } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "About Us",
-  description: "Learn about our printing business, our mission, vision, and the values that guide our work.",
-};
+export const metadata: Metadata = { title: "About AlmiraPrints", description: "Meet AlmiraPrints, your personalized printing shop in Tagbina, Surigao del Sur." };
 
 export default function AboutPage() {
   const values = [
-    {
-      icon: Award,
-      title: "Quality",
-      description: "We never compromise on the quality of our printing output and materials.",
-    },
-    {
-      icon: Lightbulb,
-      title: "Creativity",
-      description: "We bring innovative solutions to meet unique printing requirements.",
-    },
-    {
-      icon: Shield,
-      title: "Reliability",
-      description: "Consistent delivery and dependable service you can count on.",
-    },
-    {
-      icon: Heart,
-      title: "Customer Focus",
-      description: "Your satisfaction and success are at the center of everything we do.",
-    },
+    { icon: Palette, title: "Personal touches", text: "Names, themes, colors and artwork that make a print feel like yours." },
+    { icon: MessageCircle, title: "A conversation first", text: "Discuss the details, available options and timing before your project goes into production." },
+    { icon: Heart, title: "Care in the details", text: "From a thoughtful gift to an event full of matching pieces, the little details matter." },
   ];
-
   return (
     <MainLayout>
-      {/* Header */}
-      <section className="bg-gradient-to-b from-secondary/30 to-background py-16 sm:py-20">
+      <section className="page-intro">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            title="About Us"
-            description="Dedicated to delivering exceptional printing solutions"
-            centered
-          />
+          <p className="eyebrow mb-3 text-center">A little about us</p>
+          <SectionHeader as="h1" title="Personal ideas. Local printing." description="AlmiraPrints creates personalized prints for gifts, celebrations, schools, organizations and businesses." centered />
         </div>
       </section>
-
-      {/* Company Overview */}
       <section className="section-padding">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto">
-            <div className="prose prose-lg max-w-none">
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                Your Printing Business is a professional printing and advertising service provider focused on delivering quality print solutions for businesses, organizations, events, and individuals.
-              </p>
-              <p className="text-lg text-muted-foreground leading-relaxed mt-4">
-                With a commitment to quality, creativity, and customer satisfaction, we provide comprehensive printing services that help our clients communicate their message effectively and make a lasting impression.
-              </p>
-              <p className="text-lg text-muted-foreground leading-relaxed mt-4">
-                From business cards and brochures to large format printing and custom merchandise, we handle projects of all sizes with the same level of care and attention to detail.
-              </p>
-            </div>
+        <div className="container mx-auto grid gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:items-start lg:gap-16 lg:px-8">
+          <div className="space-y-5">
+            <h2 className="text-3xl font-semibold">Made around your idea</h2>
+            <p className="text-lg leading-relaxed text-muted-foreground">Based in Tagbina, Surigao del Sur, AlmiraPrints offers party and event prints, custom shirts, gifts and souvenirs, calendars, personalized products and signage.</p>
+            <p className="leading-relaxed text-muted-foreground">Start with a product or a reference. Share the names, theme, quantity and date you have in mind, and we can discuss the options for your project.</p>
+            <div className="flex flex-wrap gap-3"><Button asChild><Link href="/services">Explore our printing</Link></Button><Button asChild variant="outline"><Link href="/contact">Talk to the shop</Link></Button></div>
           </div>
+          <div className="space-y-4">{values.map(value => <div key={value.title} className="flex gap-4 rounded-2xl border bg-card p-5">
+            <value.icon className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" /><div><h3 className="text-lg font-semibold">{value.title}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{value.text}</p></div>
+          </div>)}</div>
         </div>
       </section>
-
-      {/* Mission & Vision */}
-      <section className="section-padding bg-secondary/20">
+      <section className="section-padding border-t bg-muted/60">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card>
-              <CardHeader>
-                <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Target className="h-7 w-7 text-primary" />
-                </div>
-                <CardTitle className="text-2xl">Our Mission</CardTitle>
-                <CardDescription className="text-base leading-relaxed">
-                  To deliver exceptional printing solutions that exceed expectations and help our clients succeed in their business, events, and personal endeavors through quality, innovation, and reliable service.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="h-14 w-14 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
-                  <Eye className="h-7 w-7 text-accent" />
-                </div>
-                <CardTitle className="text-2xl">Our Vision</CardTitle>
-                <CardDescription className="text-base leading-relaxed">
-                  To be the trusted printing partner known for quality, innovation, and reliable service, recognized for helping clients bring their ideas to life through professional print solutions.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Values */}
-      <section className="section-padding">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Our Values</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              The principles that guide our work and relationships with clients
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {values.map((value, index) => {
-              const IconComponent = value.icon;
-              return (
-                <Card key={index}>
-                  <CardHeader>
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                      <IconComponent className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{value.title}</CardTitle>
-                    <CardDescription>{value.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="section-padding bg-secondary/20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mx-auto text-center space-y-6">
-            <h2 className="text-3xl font-bold">Work With Us</h2>
-            <p className="text-lg text-muted-foreground">
-              Ready to bring your printing project to life? Get in touch with us today.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg">
-                <Link href="/quote">Request a Quote</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/contact">Contact Us</Link>
-              </Button>
-            </div>
+          <div className="mx-auto max-w-3xl text-center">
+            <MapPin className="mx-auto mb-4 h-6 w-6 text-primary" aria-hidden="true" /><h2 className="text-3xl font-semibold">Find us in Tagbina</h2>
+            <p className="mt-3 text-muted-foreground">{COMPANY_INFO.address}</p>
+            <p className="mt-2 text-sm text-muted-foreground">Contact us before visiting to confirm availability and arrangements for your project.</p>
+            <Button asChild variant="outline" className="mt-6"><Link href="/contact">Contact and directions</Link></Button>
           </div>
         </div>
       </section>

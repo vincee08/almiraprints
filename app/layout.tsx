@@ -10,6 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_CONFIG.url),
   title: {
     default: SITE_CONFIG.name,
     template: `%s | ${SITE_CONFIG.name}`,
@@ -17,16 +18,15 @@ export const metadata: Metadata = {
   description: SITE_CONFIG.description,
   keywords: [
     "printing services",
-    "business printing",
-    "large format printing",
-    "marketing materials",
+    "Tagbina printing",
+    "personalized gifts",
+    "party printing",
     "custom printing",
-    "promotional materials",
-    "tarpaulin printing",
-    "banner printing",
-    "business cards",
-    "brochures",
-    "advertising services",
+    "T-shirt printing",
+    "Sintra board",
+    "personalized mugs",
+    "calendar printing",
+    "event souvenirs",
   ],
   authors: [{ name: SITE_CONFIG.name }],
   creator: SITE_CONFIG.name,
@@ -72,7 +72,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
       <body className={`${inter.className} antialiased`}>
         {children}
       </body>

@@ -1,421 +1,225 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, CheckCircle2, Upload, X } from "lucide-react";
+import { FileCheck2, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { quoteFormSchema, QuoteFormValues } from "@/lib/validations";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { FormField, selectClassName } from "./form-field";
+import { DeliveryNotice, EmailFallback, SubmissionSuccess } from "./submission-feedback";
+import { quoteFormSchema, type QuoteFormValues } from "@/lib/validations";
+import { ARTWORK_ACCEPT, ARTWORK_FORMATS, validateArtwork } from "@/lib/artwork";
+import { formatQuote } from "@/lib/inquiry-content";
+import { SubmissionError } from "@/lib/submit-inquiry";
+import { submitQuote } from "@/lib/submit-quote";
 import { serviceCategories, services } from "@/data/services";
+import { portfolioItems } from "@/data/portfolio";
+import { RequestSummary } from "./request-summary";
 
-export function QuoteForm() {
-  const searchParams = useSearchParams();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+export function QuoteForm({ initialServiceSlug, initialCategorySlug, initialProjectSlug, deliveryAvailable = false }: {
+  initialServiceSlug?: string; initialCategorySlug?: string; initialProjectSlug?: string; deliveryAvailable?: boolean;
+}) {
+  const initialService = services.find(service => service.slug === initialServiceSlug);
+  const initialCategory = initialService?.category || serviceCategories.find(category => category.slug === initialCategorySlug);
+  const initialProject = portfolioItems.find(project => project.slug === initialProjectSlug);
+  const [referenceProject, setReferenceProject] = useState(initialProject);
+  const defaults: QuoteFormValues = {
+    customerName: "", email: "", phone: "", serviceCategory: initialCategory?.name || "",
+    specificService: initialService?.title || "", quantity: "", size: "", material: "", deadline: "",
+    additionalRequirements: initialProject ? "Reference project: " + initialProject.title + ". I would like something similar." : "", hasDesignFile: false, tshirtSize: "", tshirtColor: "", printLocation: "",
+  };
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, setError, clearErrors, watch, reset, getValues } = useForm<QuoteFormValues>({
+    resolver: zodResolver(quoteFormSchema), defaultValues: defaults, mode: "onBlur",
+  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
+  const [reference, setReference] = useState("");
+  const [notification, setNotification] = useState("");
+  const [step, setStep] = useState("");
+  const submission = useRef<{ signature: string; key: string } | null>(null);
+  const website = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const errorPanel = useRef<HTMLDivElement>(null);
+  const values = watch();
+  const category = values.serviceCategory;
+  const isTshirt = category === "T-Shirt Printing";
+  const filteredServices = services.filter(service => service.category.name === category);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    reset,
-  } = useForm<QuoteFormValues>({
-    resolver: zodResolver(quoteFormSchema),
-    defaultValues: {
-      hasDesignFile: false,
-    },
+  useEffect(() => {
+    if (reference) document.getElementById("submission-success")?.focus();
+    else if (submissionError) errorPanel.current?.focus();
+  }, [reference, submissionError]);
+
+  const field = (name: keyof QuoteFormValues) => ({
+    id: name,
+    "aria-invalid": Boolean(errors[name]),
+    "aria-describedby": errors[name] ? name + "-error" : undefined,
   });
 
-  // Preselect service from URL parameter
-  useEffect(() => {
-    const serviceSlug = searchParams.get("service");
-    if (serviceSlug) {
-      const preselectedService = services.find(s => s.slug === serviceSlug);
-      if (preselectedService) {
-        setValue("serviceCategory", preselectedService.category.name);
-        setValue("specificService", preselectedService.title);
-      }
-    }
-  }, [searchParams, setValue]);
-
-  const selectedCategory = watch("serviceCategory");
-  const selectedService = watch("specificService");
-  const hasDesignFile = watch("hasDesignFile");
-
-  // Filter services based on selected category
-  const filteredServices = selectedCategory
-    ? services.filter((s) => s.category.name === selectedCategory)
-    : [];
-
-  // Check if selected service is T-shirt related
-  const isTshirtService = selectedService && (
-    selectedService.includes("T-Shirt") || 
-    selectedService.includes("Sublimation") || 
-    selectedService.includes("Vinyl")
-  );
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setValue("hasDesignFile", true);
-    }
-  };
-
-  const removeFile = () => {
-    setSelectedFile(null);
-    setValue("hasDesignFile", false);
-  };
-
-  const onSubmit = async (data: QuoteFormValues) => {
-    setIsSubmitting(true);
-
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    console.log("Quote form data:", data);
-    console.log("Selected file:", selectedFile);
-    
-    setIsSubmitting(false);
-    setIsSuccess(true);
-
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setIsSuccess(false);
-      setSelectedFile(null);
-      reset();
-    }, 3000);
-  };
-
-  if (isSuccess) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center space-y-4 py-8">
-            <CheckCircle2 className="h-16 w-16 text-success mx-auto" />
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Quote Request Submitted!</h3>
-              <p className="text-muted-foreground">
-                Thank you for your request. Our team will review your requirements and send you a detailed quotation shortly.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  function removeFile() {
+    setSelectedFile(null); setFileError(""); setValue("hasDesignFile", false);
+    if (fileInput.current) fileInput.current.value = "";
   }
 
+  async function onSubmit(data: QuoteFormValues) {
+    setSubmissionError("");
+    if (fileError) { fileInput.current?.focus(); return; }
+    if (!deliveryAvailable) { setSubmissionError("Online quote requests are unavailable. Please use Prepare email or call the shop. Nothing has been saved."); return; }
+    const signature = JSON.stringify({ data, file: selectedFile && [selectedFile.name, selectedFile.size, selectedFile.lastModified] });
+    if (!submission.current || submission.current.signature !== signature) submission.current = { signature, key: crypto.randomUUID() };
+    try {
+      const result = await submitQuote(data, selectedFile, submission.current.key, website.current?.value || "", setStep);
+      setNotification(result.notification); setReference(result.reference);
+    }
+    catch (error) {
+      const failure = error instanceof SubmissionError ? error : new SubmissionError("We could not confirm sending your request. Please call or email us.");
+      Object.entries(failure.fieldErrors).forEach(([name, message]) => {
+        if (name === "designFile") setFileError(message);
+        else if (name in data) setError(name as keyof QuoteFormValues, { type: "server", message });
+      });
+      setSubmissionError(failure.message + (failure.reference ? " Reference: " + failure.reference : ""));
+    } finally { setStep(""); }
+  }
+
+  if (reference) return <SubmissionSuccess reference={reference} mode="saved" notification={notification} onNewRequest={() => {
+    setReference(""); setNotification(""); setSubmissionError(""); setReferenceProject(initialProject); reset(defaults); removeFile(); submission.current = null;
+  }} />;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Request a Quotation</CardTitle>
-        <CardDescription>
-          Provide details about your printing project and we'll send you a customized quote
-        </CardDescription>
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:gap-8">
+    <RequestSummary values={values} filename={selectedFile?.name} fileError={fileError} project={referenceProject} onRemoveProject={() => {
+      if (referenceProject) {
+        const prefix = "Reference project: " + referenceProject.title + ". I would like something similar.";
+        const notes = getValues("additionalRequirements") || "";
+        if (notes.startsWith(prefix)) setValue("additionalRequirements", notes.slice(prefix.length).trimStart());
+      }
+      setReferenceProject(undefined);
+      document.getElementById("request-summary-heading")?.focus();
+    }} />
+    <Card id="quote-form" className="min-w-0 scroll-mt-24 lg:order-first">
+      <CardHeader className="space-y-3">
+        <p className="eyebrow">Made for your project</p>
+        <h2 className="text-2xl font-semibold" id="quote-form-heading">Tell us what you have in mind</h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">Start with a product and quantity. Add any details you know; we can discuss the rest. Fields marked * are required.</p>
+        <DeliveryNotice available={deliveryAvailable} />
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Customer Name */}
-          <div className="space-y-2">
-            <Label htmlFor="customerName">
-              Full Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="customerName"
-              placeholder="Your full name"
-              {...register("customerName")}
-              aria-invalid={errors.customerName ? "true" : "false"}
-            />
-            {errors.customerName && (
-              <p className="text-sm text-destructive">{errors.customerName.message}</p>
-            )}
-          </div>
-
-          {/* Email and Phone Row */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Email Address <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your.email@example.com"
-                {...register("email")}
-                aria-invalid={errors.email ? "true" : "false"}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+        <form onSubmit={handleSubmit(onSubmit)} noValidate aria-labelledby="quote-form-heading" className="space-y-8" aria-busy={isSubmitting}>
+          <fieldset className="space-y-5">
+            <legend className="mb-4 text-base font-semibold">1. Your contact details</legend>
+            <FormField id="customerName" label="Full name" required error={errors.customerName?.message}>
+              <Input {...register("customerName")} {...field("customerName")} autoComplete="name" aria-required="true" placeholder="Your full name" />
+            </FormField>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormField id="email" label="Email address" required error={errors.email?.message}>
+                <Input {...register("email")} {...field("email")} type="email" autoComplete="email" aria-required="true" placeholder="you@example.com" />
+              </FormField>
+              <FormField id="phone" label="Phone number" required error={errors.phone?.message}>
+                <Input {...register("phone")} {...field("phone")} type="tel" autoComplete="tel" aria-required="true" placeholder="09XX XXX XXXX" />
+              </FormField>
             </div>
+          </fieldset>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">
-                Phone Number <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+63 XXX XXX XXXX"
-                {...register("phone")}
-                aria-invalid={errors.phone ? "true" : "false"}
-              />
-              {errors.phone && (
-                <p className="text-sm text-destructive">{errors.phone.message}</p>
-              )}
+          <fieldset className="space-y-5 border-t pt-6">
+            <legend className="mb-4 pr-3 text-base font-semibold">2. Your printing project</legend>
+            <FormField id="serviceCategory" label="Service category" required error={errors.serviceCategory?.message}>
+              <select {...register("serviceCategory", { onChange: () => {
+                setValue("specificService", ""); setValue("tshirtSize", ""); setValue("tshirtColor", ""); setValue("printLocation", "");
+                clearErrors(["specificService", "tshirtSize", "tshirtColor", "printLocation"]);
+              } })} {...field("serviceCategory")} aria-required="true" className={selectClassName}>
+                <option value="">Choose a category</option>
+                {serviceCategories.map(item => <option key={item.id} value={item.name}>{item.name}</option>)}
+              </select>
+            </FormField>
+            <FormField id="specificService" label="Printing service" required error={errors.specificService?.message}>
+              <select {...register("specificService")} {...field("specificService")} aria-required="true" disabled={!category} className={selectClassName}>
+                <option value="">{category ? "Choose a printing service" : "Choose a category first"}</option>
+                {filteredServices.map(service => <option key={service.id} value={service.title}>{service.title}</option>)}
+              </select>
+            </FormField>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormField id="quantity" label="Quantity" required error={errors.quantity?.message}>
+                <Input {...register("quantity")} {...field("quantity")} inputMode="numeric" aria-required="true" placeholder="e.g. 24" />
+              </FormField>
+              <FormField id="size" label="Size (optional)" error={errors.size?.message}>
+                <Input {...register("size")} {...field("size")} placeholder="e.g. A4 or 3 × 5 ft" />
+              </FormField>
+              <FormField id="material" label="Material (optional)" error={errors.material?.message}>
+                <Input {...register("material")} {...field("material")} placeholder="Tell us your preference, if any" />
+              </FormField>
+              <FormField id="deadline" label="Preferred date (optional)" error={errors.deadline?.message}>
+                <Input {...register("deadline")} {...field("deadline")} type="date" />
+              </FormField>
             </div>
-          </div>
-
-          {/* Service Category */}
-          <div className="space-y-2">
-            <Label htmlFor="serviceCategory">
-              Service Category <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              onValueChange={(value) => {
-                setValue("serviceCategory", value);
-                setValue("specificService", ""); // Reset specific service
-              }}
-              defaultValue={watch("serviceCategory")}
-            >
-              <SelectTrigger id="serviceCategory" aria-invalid={errors.serviceCategory ? "true" : "false"}>
-                <SelectValue placeholder="Select a service category" />
-              </SelectTrigger>
-              <SelectContent>
-                {serviceCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.serviceCategory && (
-              <p className="text-sm text-destructive">{errors.serviceCategory.message}</p>
-            )}
-          </div>
-
-          {/* Specific Service */}
-          <div className="space-y-2">
-            <Label htmlFor="specificService">
-              Specific Service <span className="text-destructive">*</span>
-            </Label>
-            {selectedCategory && filteredServices.length > 0 ? (
-              <Select
-                onValueChange={(value) => setValue("specificService", value)}
-                defaultValue={watch("specificService")}
-              >
-                <SelectTrigger id="specificService" aria-invalid={errors.specificService ? "true" : "false"}>
-                  <SelectValue placeholder="Select a specific service" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredServices.map((service) => (
-                    <SelectItem key={service.id} value={service.title}>
-                      {service.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                id="specificService"
-                placeholder="Please select a category first or specify your service"
-                {...register("specificService")}
-                aria-invalid={errors.specificService ? "true" : "false"}
-              />
-            )}
-            {errors.specificService && (
-              <p className="text-sm text-destructive">{errors.specificService.message}</p>
-            )}
-          </div>
-
-          {/* Quantity and Size Row */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="quantity">
-                Quantity <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="quantity"
-                placeholder="e.g., 500 pieces"
-                {...register("quantity")}
-                aria-invalid={errors.quantity ? "true" : "false"}
-              />
-              {errors.quantity && (
-                <p className="text-sm text-destructive">{errors.quantity.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="size">Size (Optional)</Label>
-              <Input
-                id="size"
-                placeholder="e.g., A4, 3x5 ft"
-                {...register("size")}
-              />
-            </div>
-          </div>
-
-          {/* Material and Deadline Row */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="material">Material (Optional)</Label>
-              <Input
-                id="material"
-                placeholder="e.g., Glossy paper, Vinyl"
-                {...register("material")}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="deadline">Preferred Deadline (Optional)</Label>
-              <Input
-                id="deadline"
-                type="date"
-                {...register("deadline")}
-              />
-            </div>
-          </div>
-
-          {/* T-Shirt Specific Fields */}
-          {isTshirtService && (
-            <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-primary/5">
-              <h3 className="font-semibold text-sm">T-Shirt Details</h3>
-              
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tshirtSize">T-Shirt Size(s)</Label>
-                  <Input
-                    id="tshirtSize"
-                    placeholder="e.g., S, M, L, XL, XXL"
-                    {...register("tshirtSize")}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Specify sizes and quantities if known
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tshirtColor">T-Shirt Color(s)</Label>
-                  <Input
-                    id="tshirtColor"
-                    placeholder="e.g., White, Black, Navy"
-                    {...register("tshirtColor")}
-                  />
-                </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">We will confirm pricing, availability and production time before an order proceeds.</p>
+            {isTshirt && <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <h3 className="text-base font-semibold">T-shirt details</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField id="tshirtSize" label="Sizes and quantities (optional)" error={errors.tshirtSize?.message}>
+                  <Input {...register("tshirtSize")} {...field("tshirtSize")} placeholder="e.g. 6 small, 12 medium, 6 large" />
+                </FormField>
+                <FormField id="tshirtColor" label="Shirt colors (optional)" error={errors.tshirtColor?.message}>
+                  <Input {...register("tshirtColor")} {...field("tshirtColor")} placeholder="e.g. white or navy" />
+                </FormField>
               </div>
+              <FormField id="printLocation" label="Print placement (optional)" error={errors.printLocation?.message}>
+                <select {...register("printLocation")} {...field("printLocation")} className={selectClassName}>
+                  <option value="">Choose a placement</option><option value="front">Front only</option><option value="back">Back only</option><option value="both">Front and back</option><option value="sleeve">Sleeve</option><option value="custom">Custom placement</option>
+                </select>
+              </FormField>
+            </div>}
+          </fieldset>
 
-              <div className="space-y-2">
-                <Label htmlFor="printLocation">Print Location</Label>
-                <Select
-                  onValueChange={(value) => setValue("printLocation", value)}
-                  defaultValue={watch("printLocation")}
-                >
-                  <SelectTrigger id="printLocation">
-                    <SelectValue placeholder="Select print location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="front">Front Only</SelectItem>
-                    <SelectItem value="back">Back Only</SelectItem>
-                    <SelectItem value="both">Front & Back</SelectItem>
-                    <SelectItem value="sleeve">Sleeve</SelectItem>
-                    <SelectItem value="custom">Custom Location</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {/* Additional Requirements */}
-          <div className="space-y-2">
-            <Label htmlFor="additionalRequirements">
-              Additional Requirements (Optional)
-            </Label>
-            <Textarea
-              id="additionalRequirements"
-              placeholder="Any special requirements or instructions..."
-              rows={4}
-              {...register("additionalRequirements")}
-            />
-          </div>
-
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="designFile">
-              Upload Design / Reference (Optional)
-            </Label>
-            <div className="space-y-2">
-              {!selectedFile ? (
-                <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center hover:border-primary transition-colors">
-                  <label htmlFor="designFile" className="cursor-pointer">
-                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      PDF, PNG, JPG, AI (Max 10MB)
-                    </p>
-                    <Input
-                      id="designFile"
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg,.ai,.psd"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                  </label>
+          <fieldset className="space-y-5 border-t pt-6">
+            <legend className="mb-4 pr-3 text-base font-semibold">3. Artwork and finishing touches</legend>
+            <FormField id="additionalRequirements" label="Anything else? (optional)" error={errors.additionalRequirements?.message}>
+              <Textarea {...register("additionalRequirements")} {...field("additionalRequirements")} rows={4} placeholder="Names, theme, event details, design help or special instructions…" />
+            </FormField>
+            <FormField id="designFile" label="Artwork or reference (optional)" hint={ARTWORK_FORMATS + ". One file, up to 10 MB (10,485,760 bytes)."} error={fileError}>
+              <div className="space-y-4 rounded-xl border border-dashed border-primary/40 bg-muted/40 p-4 sm:p-5">
+                <div className="flex items-center gap-3">
+                  <Upload className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                  <p className="text-sm text-muted-foreground">Choose a design or reference from your device.</p>
                 </div>
-              ) : (
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center">
-                      <Upload className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{selectedFile.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(selectedFile.size / 1024).toFixed(2)} KB
-                      </p>
-                    </div>
+                <input ref={fileInput} id="designFile" type="file" accept={ARTWORK_ACCEPT}
+                  aria-invalid={Boolean(fileError)} aria-describedby={"designFile-hint" + (fileError ? " designFile-error" : "")}
+                  className="block w-full min-w-0 rounded-lg text-sm file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-3 file:font-medium file:text-primary-foreground"
+                  onChange={event => {
+                    const file = event.currentTarget.files?.[0];
+                    if (!file) return;
+                    const error = validateArtwork(file);
+                    setFileError(error || ""); setSelectedFile(error ? null : file); setValue("hasDesignFile", !error);
+                    if (error) event.currentTarget.value = "";
+                  }} />
+                {fileError && !selectedFile && <Button type="button" variant="outline" size="sm" onClick={removeFile}>Continue without artwork</Button>}
+                {selectedFile && <div className="flex min-w-0 items-center gap-3 rounded-lg bg-background p-3" role="status">
+                  <FileCheck2 className="h-5 w-5 shrink-0 text-success" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="break-all text-sm font-medium">{selectedFile.name}</p>
+                    <p className="text-xs text-muted-foreground">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB · Ready to attach</p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={removeFile}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
+                  <Button type="button" variant="ghost" size="icon" aria-label="Remove artwork" onClick={removeFile}><X className="h-4 w-4" /></Button>
+                </div>}
+              </div>
+            </FormField>
+          </fieldset>
 
-          {/* Submit Button */}
-          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting Request...
-              </>
-            ) : (
-              "Request Quote"
-            )}
+          {Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl bg-destructive/5 p-4 text-sm text-destructive">Please check the highlighted fields before continuing.</p>}
+          {submissionError && <div ref={errorPanel} tabIndex={-1} role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{submissionError}</div>}
+          <div className="absolute -left-[10000px]" aria-hidden="true"><label htmlFor="quote-website">Leave this blank</label><input id="quote-website" ref={website} name="website" tabIndex={-1} autoComplete="off" /></div>
+          {step && <p role="status" className="text-sm text-muted-foreground">{step}</p>}
+          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !deliveryAvailable || Boolean(fileError)}>
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {isSubmitting ? "Saving request…" : "Send quote request"}
           </Button>
+          {(!deliveryAvailable || submissionError) && <EmailFallback subject="AlmiraPrints printing quote request" getBody={() => formatQuote(getValues(), selectedFile?.name)} hasArtwork={Boolean(selectedFile)} />}
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 }

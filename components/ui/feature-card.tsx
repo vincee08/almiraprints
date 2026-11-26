@@ -1,6 +1,6 @@
 import { LucideIcon } from "lucide-react";
 import * as Icons from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FeatureCardProps {
   title: string;
