@@ -26,10 +26,9 @@ export function isDeliveryConfigured() { return getDeliveryConfig() !== null; }
 
 export interface InquiryMessage {
   reference: string;
-  kind: "quote" | "contact";
+  kind: "contact";
   replyTo: string;
   text: string;
-  artwork?: { filename: string; content: Buffer };
 }
 
 /** Integration boundary: resolve only when the configured shop recipient is accepted. */
@@ -45,12 +44,8 @@ export async function deliverInquiry(message: InquiryMessage) {
   try {
     const receipt = await transport.sendMail({
       from: { name: COMPANY_INFO.legalName, address: config.from }, to: config.to, replyTo: message.replyTo,
-      subject: `[${message.reference}] ${message.kind === "quote" ? "Printing quote request" : "Customer inquiry"}`,
+      subject: `[${message.reference}] Customer inquiry`,
       text: `Reference: ${message.reference}\n\n${message.text}`,
-      attachments: message.artwork ? [{
-        filename: message.artwork.filename.replace(/[\r\n/\\]/g, "_"),
-        content: message.artwork.content, contentDisposition: "attachment",
-      }] : [],
     });
     if (!receipt.accepted.some(address => address.toLowerCase() === config.to.toLowerCase()) || receipt.rejected.length) throw new Error("RECIPIENT_REJECTED");
     if (!receipt.messageId) throw new Error("MISSING_DELIVERY_RECEIPT");

@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bell, ExternalLink, Loader2, LogOut, RefreshCw } from "lucide-react";
+import { Bell, ExternalLink, LogOut, RefreshCw } from "lucide-react";
 import { browserClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type StaffQuote, quoteStatuses, statusLabel, type QuoteStatus } from "@/lib/staff";
 
 type ListResult = { requests: StaffQuote[]; selected: StaffQuote | null; total: number; unread: number };
-const noticeLabel = { pending: "Waiting to notify", sending: "Sending email", sent: "SMTP accepted", failed: "Email failed", uncertain: "Delivery needs review" };
 const fileSize = (bytes: number) => bytes < 1024 ? `${bytes} bytes` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(2)} MB`;
 
 export function StaffDashboard({ email }: { email: string }) {
@@ -112,7 +111,6 @@ export function StaffDashboard({ email }: { email: string }) {
             <div className="flex items-start justify-between gap-3"><strong className="text-sm">{item.reference}</strong><span className="rounded-full bg-muted px-2 py-1 text-xs">{statusLabel(item.status)}</span></div>
             <p className="mt-2 font-medium">{item.customer_name}</p><p className="text-sm text-muted-foreground">{item.specific_service} · {item.quantity} requested</p>
             <p className="mt-2 text-xs text-muted-foreground">{new Date(item.submitted_at).toLocaleString()}</p>
-            {item.notification_state === "failed" || item.notification_state === "uncertain" ? <p className="mt-2 text-xs font-medium text-destructive">{noticeLabel[item.notification_state]}</p> : null}
           </button>)}</div>
           {!loading && list.length === 0 && <p className="rounded-xl bg-muted p-5 text-sm">No requests match these filters.</p>}
           <div className="mt-5 flex items-center justify-between gap-3"><Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(value => value - 1)}>Previous</Button><span className="text-xs text-muted-foreground">Page {page + 1}</span><Button size="sm" variant="outline" disabled={(page + 1) * 50 >= total} onClick={() => setPage(value => value + 1)}>Next</Button></div>
@@ -128,8 +126,7 @@ export function StaffDashboard({ email }: { email: string }) {
             {selected.service_category === "T-Shirt Printing" && <div className="mt-5 rounded-xl bg-muted/60 p-4"><h3 className="font-semibold">T-shirt details</h3><Detail label="Sizes" value={selected.tshirt_size} /><Detail label="Colors" value={selected.tshirt_color} /><Detail label="Placement" value={selected.print_location} /></div>}
             {selected.additional_requirements && <div className="mt-5"><h3 className="font-semibold">Additional requirements</h3><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed">{selected.additional_requirements}</p></div>}
             <div className="mt-5 rounded-xl border p-4"><h3 className="font-semibold">Artwork</h3>{selected.artwork_name ? <p className="mt-2"><a href={`/api/staff/quotes/${selected.id}/artwork`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 break-all text-sm text-primary underline">{selected.artwork_name} <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" /></a><span className="mt-1 block text-xs text-muted-foreground">Private download · {fileSize(selected.artwork_size || 0)}</span></p> : <p className="mt-2 text-sm text-muted-foreground">No artwork supplied.</p>}</div>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2"><div><label htmlFor="request-status" className="mb-2 block text-sm font-semibold">Update status</label><select id="request-status" className="h-10 w-full rounded-lg border bg-background px-3 text-sm" value={selected.status} disabled={Boolean(working)} onChange={event => void act(`/api/staff/quotes/${selected.id}/status`, { status: event.target.value as QuoteStatus })}>{quoteStatuses.map(item => <option key={item} value={item}>{statusLabel(item)}</option>)}</select></div>
-              <div><h3 className="mb-2 text-sm font-semibold">Staff email</h3><p className="text-sm">{noticeLabel[selected.notification_state]}</p>{selected.notification_error && <p className="mt-1 text-xs text-muted-foreground">{selected.notification_error}</p>}{selected.notification_state === "failed" && <Button size="sm" variant="outline" className="mt-2" disabled={Boolean(working)} onClick={() => void act(`/api/staff/quotes/${selected.id}/retry`)}>{working.endsWith("retry") && <Loader2 className="h-4 w-4 animate-spin" />}Retry email</Button>}{selected.notification_state === "uncertain" && <p className="mt-2 text-xs text-muted-foreground">Check the staff inbox before taking further action. An automatic retry could send a duplicate.</p>}</div></div>
+            <div className="mt-5"><label htmlFor="request-status" className="mb-2 block text-sm font-semibold">Update status</label><select id="request-status" className="h-10 w-full rounded-lg border bg-background px-3 text-sm sm:max-w-xs" value={selected.status} disabled={Boolean(working)} onChange={event => void act(`/api/staff/quotes/${selected.id}/status`, { status: event.target.value as QuoteStatus })}>{quoteStatuses.map(item => <option key={item} value={item}>{statusLabel(item)}</option>)}</select></div>
           </>}
         </section>
       </div>

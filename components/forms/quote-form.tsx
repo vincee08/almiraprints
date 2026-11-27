@@ -38,7 +38,6 @@ export function QuoteForm({ initialServiceSlug, initialCategorySlug, initialProj
   const [fileError, setFileError] = useState("");
   const [submissionError, setSubmissionError] = useState("");
   const [reference, setReference] = useState("");
-  const [notification, setNotification] = useState("");
   const [step, setStep] = useState("");
   const [ready, setReady] = useState(false);
   const submission = useRef<{ signature: string; key: string } | null>(null);
@@ -75,10 +74,10 @@ export function QuoteForm({ initialServiceSlug, initialCategorySlug, initialProj
     if (!submission.current || submission.current.signature !== signature) submission.current = { signature, key: crypto.randomUUID() };
     try {
       const result = await submitQuote(data, selectedFile, submission.current.key, website.current?.value || "", setStep);
-      setNotification(result.notification); setReference(result.reference);
+      setReference(result.reference);
     }
     catch (error) {
-      const failure = error instanceof SubmissionError ? error : new SubmissionError("We could not confirm sending your request. Please call or email us.");
+      const failure = error instanceof SubmissionError ? error : new SubmissionError("We could not confirm that your request was saved. Please try again or call the shop.");
       Object.entries(failure.fieldErrors).forEach(([name, message]) => {
         if (name === "designFile") setFileError(message);
         else if (name in data) setError(name as keyof QuoteFormValues, { type: "server", message });
@@ -87,8 +86,8 @@ export function QuoteForm({ initialServiceSlug, initialCategorySlug, initialProj
     } finally { setStep(""); }
   }
 
-  if (reference) return <SubmissionSuccess reference={reference} mode="saved" notification={notification} onNewRequest={() => {
-    setReference(""); setNotification(""); setSubmissionError(""); setReferenceProject(initialProject); reset(defaults); removeFile(); submission.current = null;
+  if (reference) return <SubmissionSuccess reference={reference} mode="saved" onNewRequest={() => {
+    setReference(""); setSubmissionError(""); setReferenceProject(initialProject); reset(defaults); removeFile(); submission.current = null;
   }} />;
 
   return (

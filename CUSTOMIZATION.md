@@ -354,27 +354,9 @@ export const quoteFormSchema = z.object({
 
 ### Form Submission
 
-Currently forms show success message locally. To add backend:
+The quote form saves validated requests to Supabase through `/api/quote`. Artwork uploads directly to the private bucket, and the form shows a reference only when the quote and any required artwork are saved. Quote submissions do not send email. Keep `lib/validations.ts`, the quote form, server handler, and database schema aligned when adding fields.
 
-1. **Option A: Email API**
-```typescript
-const response = await fetch('/api/contact', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(data),
-});
-```
-
-2. **Option B: Third-party Service**
-- Formspree
-- Getform
-- EmailJS
-- SendGrid
-
-3. **Option C: Database**
-- Add database (Prisma + PostgreSQL)
-- Store submissions
-- Send email notifications
+The separate contact form uses `/api/contact` and SMTP. It returns 503 when SMTP is not configured. See [backend setup](./BACKEND-SETUP.md) for configuration.
 
 ## Navigation
 

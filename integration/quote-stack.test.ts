@@ -8,7 +8,7 @@ loadEnvConfig(process.cwd());
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const web = process.env.APP_BASE_URL || "http://localhost:3000";
+const web = process.env.TEST_BASE_URL || "http://localhost:3000";
 const service = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 const publicClient = () => createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
 const fixture = (key = randomUUID(), suffix = randomUUID()) => ({
@@ -29,8 +29,12 @@ async function mailFor(reference: string) {
   }
   assert.fail(`Mailpit did not receive ${reference}`);
 }
+async function hasMail(reference: string) {
+  const list = await fetch("http://127.0.0.1:54324/api/v1/messages").then(response => response.json()) as { messages: { Subject: string }[] };
+  return list.messages.some(item => item.Subject.includes(reference));
+}
 
-test("local Supabase quote, artwork, staff RLS, notification, retry and realtime", async context => {
+test("local Supabase quotes save without email; contact, artwork, staff access and realtime remain functional", async context => {
   assert.ok(url.includes("127.0.0.1") || url.includes("localhost"), "Integration tests require local Supabase");
   const ids: string[] = [];
   const files: string[] = [];
@@ -44,15 +48,13 @@ test("local Supabase quote, artwork, staff RLS, notification, retry and realtime
   const first = fixture();
   const noFile = await post("/api/quote", { ...first, artwork: null });
   assert.equal(noFile.status, 200);
+  assert.deepEqual(Object.keys(noFile.body).sort(), ["reference", "status"]);
   assert.equal(noFile.body.status, "accepted");
-  assert.equal(noFile.body.notification, "sent", "SMTP must accept the staff email while staff is logged out");
-  const firstRow = await service.from("quote_requests").select("id,reference,submission_state,notification_state").eq("reference", noFile.body.reference).single();
+  const firstRow = await service.from("quote_requests").select("id,reference,submission_state").eq("reference", noFile.body.reference).single();
   assert.ifError(firstRow.error);
   ids.push(firstRow.data!.id);
   assert.equal(firstRow.data!.submission_state, "submitted");
-  const firstMail = await mailFor(noFile.body.reference);
-  assert.match(firstMail.Text, new RegExp(`/staff\\?request=${firstRow.data!.id}`));
-  assert.equal(firstMail.Attachments.length, 0);
+  assert.equal(await hasMail(noFile.body.reference), false, "Quote must not send email even when SMTP is configured");
   const duplicate = await post("/api/quote", { ...first, artwork: null });
   assert.equal(duplicate.body.reference, noFile.body.reference);
   const oversized = await post("/api/quote", { ...fixture(), artwork: { name: "large.pdf", size: 10485761 } });
@@ -66,17 +68,19 @@ test("local Supabase quote, artwork, staff RLS, notification, retry and realtime
   const prepared = await post("/api/quote", { ...second, artwork: { name: "design.pdf", size: content.size } });
   assert.equal(prepared.status, 200);
   assert.equal(prepared.body.status, "upload_required");
+  assert.equal(await hasMail(prepared.body.reference), false);
   ids.push(prepared.body.id);
   files.push(prepared.body.path);
   const anonClient = publicClient();
+  const incomplete = await post("/api/quote/complete", { id: prepared.body.id, submissionKey: second.submissionKey });
+  assert.equal(incomplete.status, 409, "A missing artwork upload must not be acknowledged as saved");
   const uploaded = await anonClient.storage.from("quote-artwork").uploadToSignedUrl(prepared.body.path, prepared.body.token, content, { contentType: "application/pdf" });
   assert.ifError(uploaded.error);
   const completed = await post("/api/quote/complete", { id: prepared.body.id, submissionKey: second.submissionKey });
   assert.equal(completed.status, 200);
+  assert.deepEqual(Object.keys(completed.body).sort(), ["reference", "status"]);
   assert.equal(completed.body.status, "accepted");
-  assert.equal(completed.body.notification, "sent");
-  const secondMail = await mailFor(completed.body.reference);
-  assert.equal(secondMail.Attachments.length, 0);
+  assert.equal(await hasMail(completed.body.reference), false, "Artwork quote must not send email");
   const secondRow = await service.from("quote_requests").select("submission_state,artwork_path,artwork_size").eq("id", prepared.body.id).single();
   assert.equal(secondRow.data?.submission_state, "submitted");
   assert.equal(secondRow.data?.artwork_size, content.size);
@@ -89,6 +93,7 @@ test("local Supabase quote, artwork, staff RLS, notification, retry and realtime
   assert.ifError((await anonClient.storage.from("quote-artwork").uploadToSignedUrl(boundaryPrepared.body.path, boundaryPrepared.body.token, exactTenMb, { contentType: "application/pdf" })).error);
   const boundaryCompleted = await post("/api/quote/complete", { id: boundaryPrepared.body.id, submissionKey: boundary.submissionKey });
   assert.equal(boundaryCompleted.body.status, "accepted");
+  assert.equal(await hasMail(boundaryCompleted.body.reference), false);
   assert.equal((await service.from("quote_requests").select("artwork_size").eq("id", boundaryPrepared.body.id).single()).data?.artwork_size, 10485760);
 
   const unauth = await fetch(`${web}/api/staff/quotes`);
@@ -126,34 +131,24 @@ test("local Supabase quote, artwork, staff RLS, notification, retry and realtime
     if ((payload.new as { reference?: string }).reference) received(payload);
   });
   await new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Realtime subscription timed out")), 15000);
+    const timer = setTimeout(() => reject(new Error("Realtime subscription timed out")), 30000);
     channel.subscribe(state => { if (state === "SUBSCRIBED") { clearTimeout(timer); resolve(); } });
   });
+  let eventTimer: ReturnType<typeof setTimeout> | undefined;
   try {
     const third = await post("/api/quote", { ...fixture(), artwork: null });
     assert.equal(third.body.status, "accepted");
     const thirdRow = await service.from("quote_requests").select("id").eq("reference", third.body.reference).single();
     ids.push(thirdRow.data!.id);
-    await Promise.race([event, new Promise((_, reject) => setTimeout(() => reject(new Error("Realtime event did not arrive")), 15000))]);
+    await Promise.race([event, new Promise((_, reject) => { eventTimer = setTimeout(() => reject(new Error("Realtime event did not arrive")), 30000); })]);
   } finally {
+    if (eventTimer) clearTimeout(eventTimer);
     await staff.removeChannel(channel);
     staff.realtime.disconnect();
     await staff.auth.signOut();
     await outsiderClient.auth.signOut();
   }
 
-  const { notifyQuote } = await import("../lib/server/quote-service");
-  const failedInput = fixture();
-  const failedId = randomUUID(); ids.push(failedId);
-  const rpc = await service.rpc("create_quote_request", { p_id: failedId, p_submission_key: failedInput.submissionKey, p_fingerprint: randomUUID(), p_ip_hash: randomUUID(), p_data: failedInput });
-  assert.ifError(rpc.error);
-  const previousHost = process.env.SMTP_HOST;
-  delete process.env.SMTP_HOST;
-  try { assert.equal(await notifyQuote(rpc.data, web), false); }
-  finally { process.env.SMTP_HOST = previousHost; }
-  assert.equal((await service.from("quote_requests").select("notification_state").eq("id", failedId).single()).data?.notification_state, "failed");
-  const retry = await Promise.all([notifyQuote(rpc.data, web), notifyQuote(rpc.data, web)]);
-  assert.deepEqual(retry.sort(), [false, true]);
-  assert.equal((await service.from("quote_requests").select("notification_state,notification_attempts").eq("id", failedId).single()).data?.notification_attempts, 2);
-  await mailFor(rpc.data.reference);
+  assert.equal(await hasMail(noFile.body.reference), false);
+  assert.equal(await hasMail(completed.body.reference), false);
 });

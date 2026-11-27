@@ -2,10 +2,10 @@ export class SubmissionError extends Error {
   constructor(message: string, public fieldErrors: Record<string, string> = {}, public reference?: string) { super(message); }
 }
 
-export async function submitInquiry(kind: "quote" | "contact", body: FormData | string) {
+export async function submitInquiry(kind: "contact", body: string) {
   let response: Response;
   try {
-    response = await fetch(`/api/${kind}`, { method: "POST", body, headers: typeof body === "string" ? { "Content-Type": "application/json" } : undefined });
+    response = await fetch(`/api/${kind}`, { method: "POST", body, headers: { "Content-Type": "application/json" } });
   } catch {
     throw new SubmissionError("We could not confirm sending your request. Your details are still here. Check your connection, or call or email the shop.");
   }

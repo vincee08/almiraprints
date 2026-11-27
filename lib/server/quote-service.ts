@@ -1,8 +1,6 @@
 import { createHash, createHmac, randomUUID } from "node:crypto";
-import { quoteFormSchema, type QuoteFormValues } from "@/lib/validations";
+import { quoteFormSchema } from "@/lib/validations";
 import { MAX_ARTWORK_BYTES, validateArtwork } from "@/lib/artwork";
-import { formatQuote } from "@/lib/inquiry-content";
-import { deliverInquiry, isDeliveryConfigured } from "./inquiry-delivery";
 import { serviceClient, supabaseSettings } from "@/lib/supabase/server";
 
 export const ARTWORK_BUCKET = "quote-artwork";
@@ -31,8 +29,8 @@ export async function smallJson(request: Request) {
 export const isUuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 export type QuoteRow = {
-  id: string; reference: string; submission_key: string; fingerprint: string; submission_state: string; notification_state: string;
-  notification_claim: string | null; artwork_path: string | null; artwork_name: string | null;
+  id: string; reference: string; submission_key: string; fingerprint: string; submission_state: string;
+  artwork_path: string | null; artwork_name: string | null;
   artwork_size: number | null; artwork_mime: string | null; customer_name: string; email: string;
   phone: string; service_category: string; specific_service: string; quantity: number;
   size: string | null; material: string | null; deadline: string | null;
@@ -49,44 +47,7 @@ export async function storedArtwork(row: QuoteRow) {
   return Boolean(file && Number(file.metadata?.size) === row.artwork_size && file.metadata?.mimetype === row.artwork_mime && row.artwork_size <= MAX_ARTWORK_BYTES);
 }
 
-function rowToQuote(row: QuoteRow): QuoteFormValues {
-  return {
-    customerName: row.customer_name, email: row.email, phone: row.phone,
-    serviceCategory: row.service_category, specificService: row.specific_service, quantity: String(row.quantity),
-    size: row.size || "", material: row.material || "", deadline: row.deadline || "",
-    additionalRequirements: row.additional_requirements || "", hasDesignFile: Boolean(row.artwork_path),
-    tshirtSize: row.tshirt_size || "", tshirtColor: row.tshirt_color || "",
-    printLocation: (row.print_location || "") as QuoteFormValues["printLocation"],
-  };
-}
-
-export async function notifyQuote(row: QuoteRow, baseUrl: string) {
-  const supabase = serviceClient();
-  const { data, error } = await supabase.rpc("claim_quote_notification", { p_id: row.id });
-  if (error) throw error;
-  const claimed = data as QuoteRow | null;
-  if (!claimed?.notification_claim) return false;
-  let state: "sent" | "failed" | "uncertain" = "sent";
-  let reason: string | null = null;
-  if (!isDeliveryConfigured()) { state = "failed"; reason = "SMTP is not configured"; }
-  else {
-    try {
-      await deliverInquiry({ reference: row.reference, kind: "quote", replyTo: row.email,
-        text: `${formatQuote(rowToQuote(row), row.artwork_name || undefined)}\n\nStaff dashboard: ${baseUrl.replace(/\/$/, "")}/staff?request=${row.id}` });
-    } catch (error) {
-      reason = error instanceof Error && error.message === "RECIPIENT_REJECTED" ? "Recipient rejected the message" : "SMTP delivery could not be confirmed; check the inbox before any manual action";
-      state = reason.startsWith("Recipient") ? "failed" : "uncertain";
-    }
-  }
-  const result = await supabase.rpc("finish_quote_notification", { p_id: row.id, p_claim: claimed.notification_claim, p_state: state, p_error: reason });
-  if (result.error || !result.data) throw result.error || new Error("NOTIFICATION_STATE_FAILED");
-  return state === "sent";
-}
-
-async function acceptedResult(row: QuoteRow) {
-  const { data } = await serviceClient().from("quote_requests").select("notification_state").eq("id", row.id).single();
-  return quoteJson({ status: "accepted", reference: row.reference, notification: data?.notification_state || "uncertain" });
-}
+function acceptedResult(row: QuoteRow) { return quoteJson({ status: "accepted", reference: row.reference }); }
 
 export async function submitQuote(request: Request) {
   if (!sameOrigin(request)) return quoteJson({ message: "Please use the AlmiraPrints website." }, 403);
@@ -124,13 +85,11 @@ export async function submitQuote(request: Request) {
   const row = data as QuoteRow;
   if (row.fingerprint !== fingerprint) return quoteJson({ message: "This request changed while it was being saved. Please reload and try again." }, 409);
   if (row.submission_state === "submitted") {
-    if (row.notification_state === "pending") await notifyQuote(row, process.env.APP_BASE_URL || new URL(request.url).origin).catch(() => {});
     return acceptedResult(row);
   }
   if (await storedArtwork(row)) {
     const finished = await supabase.rpc("finish_quote_upload", { p_id: row.id, p_submission_key: row.submission_key });
     if (finished.error || !finished.data) return quoteJson({ message: "We could not finish saving your artwork. Please try again." }, 503);
-    await notifyQuote(finished.data as QuoteRow, process.env.APP_BASE_URL || new URL(request.url).origin).catch(() => {});
     return acceptedResult(row);
   }
   const signed = await supabase.storage.from(ARTWORK_BUCKET).createSignedUploadUrl(row.artwork_path!);
@@ -152,7 +111,6 @@ export async function completeQuote(request: Request) {
     if (!await storedArtwork(row)) return quoteJson({ message: "Artwork has not finished uploading or does not match the selected file. Please try again." }, 409);
     const finished = await supabase.rpc("finish_quote_upload", { p_id: row.id, p_submission_key: row.submission_key });
     if (finished.error || !finished.data) return quoteJson({ message: "We could not finish saving your request. Please try again." }, 503);
-    await notifyQuote(finished.data as QuoteRow, process.env.APP_BASE_URL || new URL(request.url).origin).catch(() => {});
-  } else if (row.notification_state === "pending") await notifyQuote(row, process.env.APP_BASE_URL || new URL(request.url).origin).catch(() => {});
+  }
   return acceptedResult(row);
 }

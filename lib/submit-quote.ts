@@ -2,7 +2,7 @@ import type { QuoteFormValues } from "@/lib/validations";
 import { browserClient } from "@/lib/supabase/browser";
 import { SubmissionError } from "@/lib/submit-inquiry";
 
-type Result = { status?: string; reference?: string; notification?: string; id?: string; path?: string; token?: string; mime?: string; submissionKey?: string; message?: string; fieldErrors?: Record<string, string> };
+type Result = { status?: string; reference?: string; id?: string; path?: string; token?: string; mime?: string; submissionKey?: string; message?: string; fieldErrors?: Record<string, string> };
 
 async function post(url: string, body: object): Promise<Result> {
   let response: Response;
@@ -26,5 +26,5 @@ export async function submitQuote(data: QuoteFormValues, file: File | null, subm
     final = await post("/api/quote/complete", { id: result.id, submissionKey: result.submissionKey || submissionKey });
   }
   if (final.status !== "accepted" || !/^AP-[A-F0-9]{8}$/.test(final.reference || "")) throw new SubmissionError("We could not confirm that your request was saved. Please try again.");
-  return { reference: final.reference!, notification: final.notification || "pending" };
+  return { reference: final.reference! };
 }

@@ -4,7 +4,7 @@ import { setImmediate } from "node:timers/promises";
 import nodemailer from "nodemailer";
 import { MAX_ARTWORK_BYTES, validateArtwork } from "../lib/artwork";
 import { quoteFormSchema } from "../lib/validations";
-import { createInquiryHandler } from "../lib/server/inquiry-handler";
+import { createContactHandler } from "../lib/server/inquiry-handler";
 import { deliverInquiry, getDeliveryConfig, type InquiryMessage } from "../lib/server/inquiry-delivery";
 import { SubmissionError, submitInquiry } from "../lib/submit-inquiry";
 
@@ -15,12 +15,6 @@ const quote = {
 };
 const contact = { fullName: "Test Customer", email: "customer@example.test", phone: "09923102867", serviceType: "General Inquiry", message: "Please discuss a printing project with me." };
 
-function quoteRequest(file?: File, overrides: Record<string, string> = {}) {
-  const data = new FormData();
-  Object.entries({ ...quote, ...overrides }).forEach(([key, value]) => data.set(key, String(value)));
-  if (file) data.set("designFile", file);
-  return new Request("http://localhost/api/quote", { method: "POST", body: data });
-}
 function contactRequest(data: unknown = contact) {
   return new Request("http://localhost/api/contact", { method: "POST", body: JSON.stringify(data), headers: { "content-type": "application/json" } });
 }
@@ -46,59 +40,41 @@ test("delivery configuration is unavailable until actual required settings exist
   assert.equal(config?.port, 587);
 });
 
-test("both endpoints return 503 and never deliver when mail is unconfigured", async () => {
+test("contact returns 503 and never delivers when mail is unconfigured", async () => {
   let deliveries = 0;
   const dependencies = { configured: () => false, deliver: async () => { deliveries++; } };
-  for (const [kind, request] of [["quote", quoteRequest()], ["contact", contactRequest()]] as const) {
-    const response = await createInquiryHandler(kind, dependencies)(request);
-    assert.equal(response.status, 503);
-    const body = await response.json();
-    assert.equal(body.code, "DELIVERY_UNAVAILABLE");
-    assert.equal(body.status, undefined);
-  }
+  const response = await createContactHandler(dependencies)(contactRequest());
+  assert.equal(response.status, 503);
+  const body = await response.json();
+  assert.equal(body.code, "DELIVERY_UNAVAILABLE");
+  assert.equal(body.status, undefined);
   assert.equal(deliveries, 0);
 });
 
-test("invalid field values are rejected before delivery", async () => {
+test("invalid contact fields are rejected before delivery", async () => {
   let delivered = false;
-  const handler = createInquiryHandler("quote", { configured: () => true, deliver: async () => { delivered = true; } });
-  const response = await handler(quoteRequest(undefined, { quantity: "0" }));
+  const handler = createContactHandler({ configured: () => true, deliver: async () => { delivered = true; } });
+  const response = await handler(contactRequest({ ...contact, email: "invalid" }));
   assert.equal(response.status, 400);
-  assert.match((await response.json()).fieldErrors.quantity, /greater than zero/);
+  assert.ok((await response.json()).fieldErrors.email);
   assert.equal(delivered, false);
-});
-
-test("server enforces artwork limits even when client validation is bypassed", async () => {
-  const handler = createInquiryHandler("quote", { configured: () => true, deliver: async () => { assert.fail("Invalid artwork must not be sent"); } });
-  const oversize = new File([new Uint8Array(MAX_ARTWORK_BYTES + 1)], "too-big.pdf");
-  assert.equal((await handler(quoteRequest(oversize))).status, 413);
-  assert.equal((await handler(quoteRequest(new File([], "empty.pdf")))).status, 400);
-  assert.equal((await handler(quoteRequest(new File(["data"], "unsafe.exe")))).status, 400);
-});
-
-test("server accepts an artwork file at exactly the advertised size boundary", async () => {
-  let size = 0;
-  const handler = createInquiryHandler("quote", { configured: () => true, deliver: async message => { size = message.artwork?.content.length || 0; } });
-  const response = await handler(quoteRequest(new File([new Uint8Array(MAX_ARTWORK_BYTES)], "boundary.pdf")));
-  assert.equal(response.status, 200);
-  assert.equal(size, MAX_ARTWORK_BYTES);
 });
 
 test("chunked oversized bodies are bounded without trusting Content-Length", async () => {
   const request = new Request("http://localhost/api/contact", { method: "POST", headers: { "content-type": "application/json" }, body: "x".repeat(17000) });
-  const response = await createInquiryHandler("contact")(request);
+  const response = await createContactHandler()(request);
   assert.equal(response.status, 413);
 });
 
 test("malformed requests and cross-origin posts cannot reach delivery", async () => {
-  const handler = createInquiryHandler("contact", { configured: () => true, deliver: async () => { assert.fail("Must not deliver"); } });
+  const handler = createContactHandler({ configured: () => true, deliver: async () => { assert.fail("Must not deliver"); } });
   assert.equal((await handler(new Request("http://localhost/api/contact", { method: "POST", headers: { "content-type": "application/json" }, body: "{" }))).status, 400);
   assert.equal((await handler(new Request("http://localhost/api/contact", { method: "POST", body: "text" }))).status, 415);
   assert.equal((await handler(new Request("http://localhost/api/contact", { method: "POST", headers: { origin: "https://another.example" }, body: "text" }))).status, 403);
 });
 
 test("SMTP failures produce an unconfirmed result with a reference, never success", async () => {
-  const handler = createInquiryHandler("contact", { configured: () => true, deliver: async () => { throw new Error("SMTP rejected"); } });
+  const handler = createContactHandler({ configured: () => true, deliver: async () => { throw new Error("SMTP rejected"); } });
   const response = await handler(contactRequest());
   assert.equal(response.status, 502);
   const result = await response.json();
@@ -111,7 +87,7 @@ test("no response acknowledges acceptance before the transport has completed", a
   let release!: () => void;
   let finished = false;
   const pending = new Promise<void>(resolve => { release = resolve; });
-  const handler = createInquiryHandler("contact", { configured: () => true, deliver: () => pending });
+  const handler = createContactHandler({ configured: () => true, deliver: () => pending });
   const response = handler(contactRequest()).then(value => { finished = true; return value; });
   await setImmediate();
   assert.equal(finished, false);
@@ -121,15 +97,12 @@ test("no response acknowledges acceptance before the transport has completed", a
   assert.equal((await result.json()).status, "accepted");
 });
 
-test("quote delivery includes the real attachment bytes and customer specifications", async () => {
+test("contact delivery retains the customer's message and reply address", async () => {
   let received: InquiryMessage | undefined;
-  const handler = createInquiryHandler("quote", { configured: () => true, deliver: async message => { received = message; } });
-  const content = "%PDF-1.7 test fixture";
-  assert.equal((await handler(quoteRequest(new File([content], "design.pdf", { type: "application/pdf" })))).status, 200);
-  assert.equal(received?.artwork?.content.toString(), content);
-  assert.equal(received?.artwork?.filename, "design.pdf");
-  assert.match(received!.text, /6 S, 12 M, 6 L/);
-  assert.equal(received?.replyTo, quote.email);
+  const handler = createContactHandler({ configured: () => true, deliver: async message => { received = message; } });
+  assert.equal((await handler(contactRequest())).status, 200);
+  assert.match(received!.text, /Please discuss a printing project/);
+  assert.equal(received?.replyTo, contact.email);
 });
 
 test("SMTP adapter requires acceptance of the shop inbox and a message receipt", async context => {

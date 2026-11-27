@@ -1,3 +1,3 @@
-import { createInquiryHandler } from "@/lib/server/inquiry-handler";
+import { createContactHandler } from "@/lib/server/inquiry-handler";
 export const runtime = "nodejs";
-export const POST = createInquiryHandler("contact");
+export const POST = createContactHandler();
