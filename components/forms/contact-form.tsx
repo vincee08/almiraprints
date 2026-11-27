@@ -9,22 +9,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormField, selectClassName } from "./form-field";
-import { DeliveryNotice, EmailFallback, SubmissionSuccess } from "./submission-feedback";
+import { SubmissionSuccess } from "./submission-feedback";
 import { contactFormSchema, type ContactFormValues } from "@/lib/validations";
-import { formatContact } from "@/lib/inquiry-content";
 import { SubmissionError, submitInquiry } from "@/lib/submit-inquiry";
 import { serviceCategories } from "@/data/services";
+import { contactInfo } from "@/data/navigation";
 
 const defaults: ContactFormValues = { fullName: "", email: "", phone: "", serviceType: "", message: "" };
 
-export function ContactForm({ deliveryAvailable = false }: { deliveryAvailable?: boolean }) {
-  const { register, handleSubmit, formState: { errors, isSubmitting }, setError, reset, getValues } = useForm<ContactFormValues>({
+export function ContactForm({ storageAvailable = false }: { storageAvailable?: boolean }) {
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setError, reset } = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema), defaultValues: defaults, mode: "onBlur",
   });
   const [submissionError, setSubmissionError] = useState("");
   const [reference, setReference] = useState("");
   const [ready, setReady] = useState(false);
   const errorPanel = useRef<HTMLDivElement>(null);
+  const website = useRef<HTMLInputElement>(null);
+  const submission = useRef<{ signature: string; key: string } | null>(null);
   useEffect(() => {
     if (reference) document.getElementById("submission-success")?.focus();
     else if (submissionError) errorPanel.current?.focus();
@@ -35,24 +37,26 @@ export function ContactForm({ deliveryAvailable = false }: { deliveryAvailable?:
   });
   async function onSubmit(data: ContactFormValues) {
     setSubmissionError("");
-    if (!deliveryAvailable) { setSubmissionError("Online sending is unavailable. Please prepare an email or call the shop. Nothing has been sent."); return; }
-    try { setReference(await submitInquiry("contact", JSON.stringify(data))); }
+    if (!storageAvailable) { setSubmissionError("Online messages are unavailable. Please call the shop. Nothing has been saved."); return; }
+    const signature = JSON.stringify(data);
+    if (!submission.current || submission.current.signature !== signature) submission.current = { signature, key: crypto.randomUUID() };
+    try { setReference(await submitInquiry("contact", JSON.stringify({ ...data, submissionKey: submission.current.key, website: website.current?.value || "" }))); }
     catch (error) {
-      const failure = error instanceof SubmissionError ? error : new SubmissionError("We could not confirm sending your message. Please call or email us.");
+      const failure = error instanceof SubmissionError ? error : new SubmissionError("We could not confirm that your message was saved. Please try again or call the shop.");
       Object.entries(failure.fieldErrors).forEach(([name, message]) => {
         if (name in data) setError(name as keyof ContactFormValues, { type: "server", message });
       });
       setSubmissionError(failure.message + (failure.reference ? " Reference: " + failure.reference : ""));
     }
   }
-  if (reference) return <SubmissionSuccess reference={reference} onNewRequest={() => { setReference(""); setSubmissionError(""); reset(defaults); }} />;
+  if (reference) return <SubmissionSuccess reference={reference} mode="contact" onNewRequest={() => { setReference(""); setSubmissionError(""); reset(defaults); submission.current = null; }} />;
   return (
     <Card id="contact-form" className="scroll-mt-24">
       <CardHeader className="space-y-3">
         <p className="eyebrow">Let’s talk printing</p>
         <h2 id="contact-form-heading" className="text-2xl font-semibold">Send us a message</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">Ask about a product, your artwork or an existing project. Fields marked * are required.</p>
-        <DeliveryNotice available={deliveryAvailable} />
+        {!storageAvailable && <p role="status" className="rounded-xl border border-secondary bg-secondary/20 p-4 text-sm">Online messages are temporarily unavailable. Call <a className="font-semibold text-primary underline" href={`tel:${contactInfo.phone.replace(/\D/g, "")}`}>{contactInfo.phone}</a> instead.</p>}
       </CardHeader>
       <CardContent>
         <form method="post" onSubmit={handleSubmit(onSubmit)} noValidate aria-labelledby="contact-form-heading" aria-busy={isSubmitting} className="space-y-5">
@@ -77,12 +81,12 @@ export function ContactForm({ deliveryAvailable = false }: { deliveryAvailable?:
             <Textarea {...register("message")} {...field("message")} aria-required="true" rows={5} placeholder="Tell us what you need…" />
           </FormField>
           {Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl bg-destructive/5 p-4 text-sm text-destructive">Please check the highlighted fields before continuing.</p>}
+          <div className="absolute -left-[10000px]" aria-hidden="true"><label htmlFor="contact-website">Leave this blank</label><input id="contact-website" ref={website} name="website" tabIndex={-1} autoComplete="off" /></div>
           {submissionError && <div ref={errorPanel} tabIndex={-1} role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{submissionError}</div>}
-          <Button type="submit" size="lg" className="w-full" disabled={!ready || isSubmitting || !deliveryAvailable}>
+          <Button type="submit" size="lg" className="w-full" disabled={!ready || isSubmitting || !storageAvailable}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            {isSubmitting ? "Sending message…" : "Send message"}
+            {isSubmitting ? "Saving message…" : "Send message"}
           </Button>
-          {(!deliveryAvailable || submissionError) && <EmailFallback subject="AlmiraPrints customer inquiry" getBody={() => formatContact(getValues())} />}
         </form>
       </CardContent>
     </Card>

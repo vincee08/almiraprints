@@ -1,8 +1,4 @@
-import type { ContactFormValues, QuoteFormValues } from "@/lib/validations";
-
-export function formatContact(data: ContactFormValues) {
-  return `Name: ${data.fullName}\nEmail: ${data.email}\nPhone: ${data.phone}\nService: ${data.serviceType}\n\n${data.message}`;
-}
+import type { QuoteFormValues } from "@/lib/validations";
 
 export function formatQuote(data: QuoteFormValues, filename?: string) {
   const fields = [

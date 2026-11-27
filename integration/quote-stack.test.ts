@@ -20,28 +20,21 @@ const post = async (path: string, body: object) => {
   const response = await fetch(web + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   return { status: response.status, body: await response.json() };
 };
-async function mailFor(reference: string) {
-  for (let i = 0; i < 20; i++) {
-    const list = await fetch("http://127.0.0.1:54324/api/v1/messages").then(response => response.json()) as { messages: { ID: string; Subject: string }[] };
-    const message = list.messages.find(item => item.Subject.includes(reference));
-    if (message) return fetch(`http://127.0.0.1:54324/api/v1/message/${message.ID}`).then(response => response.json()) as Promise<{ Text: string; Attachments: unknown[] }>;
-    await new Promise(resolve => setTimeout(resolve, 150));
-  }
-  assert.fail(`Mailpit did not receive ${reference}`);
-}
 async function hasMail(reference: string) {
   const list = await fetch("http://127.0.0.1:54324/api/v1/messages").then(response => response.json()) as { messages: { Subject: string }[] };
   return list.messages.some(item => item.Subject.includes(reference));
 }
 
-test("local Supabase quotes save without email; contact, artwork, staff access and realtime remain functional", async context => {
+test("local Supabase keeps quote and contact saves private, deduplicated and staff accessible", async context => {
   assert.ok(url.includes("127.0.0.1") || url.includes("localhost"), "Integration tests require local Supabase");
   const ids: string[] = [];
+  const contactIds: string[] = [];
   const files: string[] = [];
   const users: string[] = [];
   context.after(async () => {
     if (files.length) await service.storage.from("quote-artwork").remove(files);
     for (const id of ids) await service.from("quote_requests").delete().eq("id", id);
+    for (const id of contactIds) await service.from("contact_messages").delete().eq("id", id);
     for (const id of users) await service.auth.admin.deleteUser(id);
   });
 
@@ -54,14 +47,24 @@ test("local Supabase quotes save without email; contact, artwork, staff access a
   assert.ifError(firstRow.error);
   ids.push(firstRow.data!.id);
   assert.equal(firstRow.data!.submission_state, "submitted");
-  assert.equal(await hasMail(noFile.body.reference), false, "Quote must not send email even when SMTP is configured");
+  assert.equal(await hasMail(noFile.body.reference), false, "Quote must not send email");
   const duplicate = await post("/api/quote", { ...first, artwork: null });
   assert.equal(duplicate.body.reference, noFile.body.reference);
   const oversized = await post("/api/quote", { ...fixture(), artwork: { name: "large.pdf", size: 10485761 } });
   assert.equal(oversized.status, 413);
-  const contact = await post("/api/contact", { fullName: "Integration Customer", email: "customer@example.test", phone: "09923102867", serviceType: "General Inquiry", message: "Please discuss a personalized print project." });
+  const contactInput = { fullName: "Integration Customer", email: "customer@example.test", phone: "09923102867", serviceType: "General Inquiry", message: `Please discuss a personalized print project ${randomUUID()}.`, submissionKey: randomUUID(), website: "" };
+  const contact = await post("/api/contact", contactInput);
+  assert.equal(contact.status, 200);
+  assert.deepEqual(Object.keys(contact.body).sort(), ["reference", "status"]);
   assert.equal(contact.body.status, "accepted");
-  await mailFor(contact.body.reference);
+  const contactRow = await service.from("contact_messages").select("id,reference,message").eq("reference", contact.body.reference).single();
+  assert.ifError(contactRow.error); contactIds.push(contactRow.data!.id);
+  assert.equal(contactRow.data?.message, contactInput.message);
+  assert.equal((await post("/api/contact", contactInput)).body.reference, contact.body.reference);
+  assert.equal((await post("/api/contact", { ...contactInput, submissionKey: randomUUID() })).body.reference, contact.body.reference);
+  assert.equal((await post("/api/contact", { ...contactInput, message: "Changed message with the same submission key." })).status, 409);
+  assert.equal((await post("/api/contact", { ...contactInput, submissionKey: randomUUID(), website: "spam.example" })).status, 400);
+  assert.equal(await hasMail(contact.body.reference), false, "Contact save must not send email");
 
   const second = fixture();
   const content = new Blob(["%PDF-1.7 fixture artwork"], { type: "application/pdf" });
@@ -98,10 +101,13 @@ test("local Supabase quotes save without email; contact, artwork, staff access a
 
   const unauth = await fetch(`${web}/api/staff/quotes`);
   assert.equal(unauth.status, 401);
+  assert.equal((await fetch(`${web}/api/staff/contacts`)).status, 401);
   assert.equal((await fetch(`${web}/api/staff/quotes/${prepared.body.id}/artwork`, { redirect: "manual" })).status, 401);
   assert.notEqual((await fetch(`${url}/storage/v1/object/public/quote-artwork/${prepared.body.path}`)).status, 200);
   const anonRows = await anonClient.from("quote_requests").select("id");
   assert.ok(anonRows.error || anonRows.data?.length === 0);
+  const anonContacts = await anonClient.from("contact_messages").select("id");
+  assert.ok(anonContacts.error || anonContacts.data?.length === 0);
   const anonFile = await anonClient.storage.from("quote-artwork").download(prepared.body.path);
   assert.ok(anonFile.error);
 
@@ -111,6 +117,7 @@ test("local Supabase quotes save without email; contact, artwork, staff access a
   const outsiderClient = publicClient();
   assert.ifError((await outsiderClient.auth.signInWithPassword({ email: outsider.data.user!.email!, password })).error);
   assert.equal((await outsiderClient.from("quote_requests").select("id")).data?.length, 0);
+  assert.equal((await outsiderClient.from("contact_messages").select("id")).data?.length, 0);
 
   const staffAccount = await service.auth.admin.createUser({ email: `staff-${randomUUID()}@example.test`, password, email_confirm: true });
   assert.ifError(staffAccount.error); users.push(staffAccount.data.user!.id);
@@ -120,6 +127,9 @@ test("local Supabase quotes save without email; contact, artwork, staff access a
   assert.ifError(signIn.error);
   await staff.realtime.setAuth(signIn.data.session!.access_token);
   assert.ok((await staff.from("quote_requests").select("id")).data?.length);
+  assert.equal((await staff.from("contact_messages").select("reference").eq("reference", contact.body.reference).single()).data?.reference, contact.body.reference);
+  const deniedContactUpdate = await staff.from("contact_messages").update({ message: "Not allowed" }).eq("id", contactRow.data!.id).select("id");
+  assert.ok(deniedContactUpdate.error || deniedContactUpdate.data?.length === 0);
   assert.equal((await staff.from("quote_requests").update({ status: "in_progress" }).eq("id", firstRow.data!.id).select("status").single()).data?.status, "in_progress");
   assert.ok((await outsiderClient.from("quote_requests").update({ status: "completed" }).eq("id", firstRow.data!.id).select("id")).data?.length === 0);
   const staffFile = await staff.storage.from("quote-artwork").createSignedUrl(prepared.body.path, 60);
@@ -134,6 +144,8 @@ test("local Supabase quotes save without email; contact, artwork, staff access a
     const timer = setTimeout(() => reject(new Error("Realtime subscription timed out")), 30000);
     channel.subscribe(state => { if (state === "SUBSCRIBED") { clearTimeout(timer); resolve(); } });
   });
+  // The local Realtime server may acknowledge a channel before its WAL subscription is ready.
+  await new Promise(resolve => setTimeout(resolve, 500));
   let eventTimer: ReturnType<typeof setTimeout> | undefined;
   try {
     const third = await post("/api/quote", { ...fixture(), artwork: null });

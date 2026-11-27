@@ -118,7 +118,7 @@
 - Add search functionality to services page
 - Implement service filtering by category
 - Add portfolio images for each service
-- Connect forms to actual backend/email service
+- Persist quote and contact forms in private Supabase tables
 - Add metadataBase for production domain
 - Consider adding service comparison feature
 - Add customer reviews per service

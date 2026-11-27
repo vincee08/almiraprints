@@ -1,9 +1,12 @@
-import { randomUUID } from "node:crypto";
+import { createHash, createHmac, randomUUID } from "node:crypto";
 import { contactFormSchema } from "@/lib/validations";
-import { formatContact } from "@/lib/inquiry-content";
-import { deliverInquiry, isDeliveryConfigured, type InquiryMessage } from "./inquiry-delivery";
+import { serviceClient, supabaseSettings } from "@/lib/supabase/server";
 
-type Dependencies = { configured: () => boolean; deliver: (message: InquiryMessage) => Promise<void> };
+type ContactRow = { reference: string; fingerprint: string };
+type SaveArgs = { p_id: string; p_submission_key: string; p_fingerprint: string; p_ip_hash: string; p_data: object };
+type Dependencies = { configured: () => boolean; save: (args: SaveArgs) => Promise<ContactRow> };
+export const contactIsConfigured = () => Boolean(supabaseSettings());
+const isUuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 class BodyTooLarge extends Error {}
 
 async function readBody(request: Request, limit: number) {
@@ -29,7 +32,14 @@ async function readBody(request: Request, limit: number) {
 
 const json = (body: object, status: number) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
-export function createContactHandler(dependencies: Dependencies = { configured: isDeliveryConfigured, deliver: deliverInquiry }) {
+export function createContactHandler(dependencies: Dependencies = {
+  configured: contactIsConfigured,
+  save: async args => {
+    const { data, error } = await serviceClient().rpc("create_contact_message", args);
+    if (error || !data) throw error || new Error("CONTACT_SAVE_FAILED");
+    return data as ContactRow;
+  },
+}) {
   return async function POST(request: Request) {
     const origin = request.headers.get("origin");
     if (origin && origin !== new URL(request.url).origin) return json({ message: "Please submit this form from the AlmiraPrints website." }, 403);
@@ -38,24 +48,31 @@ export function createContactHandler(dependencies: Dependencies = { configured: 
       if (!request.headers.get("content-type")?.startsWith("application/json")) return json({ message: "Use the contact form to submit your message." }, 415);
       input = JSON.parse(new TextDecoder().decode(await readBody(request, 16 * 1024)));
     } catch (error) {
-      return json({ message: error instanceof BodyTooLarge ? "The request is too large. Artwork must be 10 MB or smaller." : "We could not read this request. Please check the form and try again." }, error instanceof BodyTooLarge ? 413 : 400);
+      return json({ message: error instanceof BodyTooLarge ? "The message is too large." : "We could not read this request. Please check the form and try again." }, error instanceof BodyTooLarge ? 413 : 400);
     }
-    const parsed = contactFormSchema.safeParse(input);
+    if (!input || typeof input !== "object" || Array.isArray(input)) return json({ message: "We could not read this request." }, 400);
+    const body = input as Record<string, unknown>;
+    if (typeof body.website === "string" && body.website.trim()) return json({ message: "We could not accept this message." }, 400);
+    if (!isUuid(body.submissionKey)) return json({ message: "Please reload the form and try again." }, 400);
+    const parsed = contactFormSchema.safeParse(body);
     if (!parsed.success) {
       const fieldErrors = Object.fromEntries(parsed.error.issues.map(issue => [issue.path[0], issue.message]));
-      return json({ message: "Check the highlighted fields. Your request has not been sent.", fieldErrors }, 400);
+      return json({ message: "Check the highlighted fields. Your message has not been saved.", fieldErrors }, 400);
     }
-    if (!dependencies.configured()) return json({ code: "DELIVERY_UNAVAILABLE", message: "Online sending is currently unavailable. Your request has not been sent. Please call or email us instead." }, 503);
-    const reference = `AP-${randomUUID().slice(0, 8).toUpperCase()}`;
+    if (!dependencies.configured()) return json({ code: "STORAGE_UNAVAILABLE", message: "Online messages are currently unavailable. Nothing has been saved; please call the shop." }, 503);
+    const fingerprint = createHash("sha256").update(JSON.stringify({ ...parsed.data, email: parsed.data.email.toLowerCase() })).digest("hex");
+    const ip = (request.headers.get("x-forwarded-for")?.split(",")[0] || "local").trim().slice(0, 100);
+    const ipHash = createHmac("sha256", process.env.SUPABASE_SERVICE_ROLE_KEY || "test-only").update(ip).digest("hex");
     try {
-      await dependencies.deliver({
-        reference, kind: "contact", replyTo: parsed.data.email,
-        text: formatContact(parsed.data),
+      const saved = await dependencies.save({
+        p_id: randomUUID(), p_submission_key: body.submissionKey,
+        p_fingerprint: fingerprint, p_ip_hash: ipHash, p_data: parsed.data,
       });
-      // SMTP acceptance is not a promise of inbox delivery or a confirmed order.
-      return json({ status: "accepted", reference }, 200);
-    } catch {
-      return json({ code: "DELIVERY_FAILED", message: "We could not confirm that your request was sent. Your details are still here. Please call or email us and mention this reference.", reference }, 502);
+      if (saved.fingerprint !== fingerprint) return json({ message: "This message changed while it was being saved. Please reload and try again." }, 409);
+      return json({ status: "accepted", reference: saved.reference }, 200);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("CONTACT_RATE_LIMIT")) return json({ message: "Too many messages. Please try again later or call the shop." }, 429);
+      return json({ code: "SAVE_FAILED", message: "We could not save your message. Please try again." }, 503);
     }
   };
 }

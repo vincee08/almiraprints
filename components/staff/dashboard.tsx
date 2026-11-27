@@ -6,11 +6,13 @@ import { browserClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type StaffQuote, quoteStatuses, statusLabel, type QuoteStatus } from "@/lib/staff";
+import { StaffContactMessages } from "./contact-messages";
 
 type ListResult = { requests: StaffQuote[]; selected: StaffQuote | null; total: number; unread: number };
 const fileSize = (bytes: number) => bytes < 1024 ? `${bytes} bytes` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(2)} MB`;
 
 export function StaffDashboard({ email }: { email: string }) {
+  const [view, setView] = useState<"quotes" | "contacts">("quotes");
   const [list, setList] = useState<StaffQuote[]>([]);
   const [extra, setExtra] = useState<StaffQuote | null>(null);
   const [selectedId, setSelectedId] = useState("");
@@ -88,13 +90,18 @@ export function StaffDashboard({ email }: { email: string }) {
   return <main className="min-h-screen bg-muted/30 px-4 py-6 sm:px-6 lg:px-8">
     <div className="mx-auto max-w-7xl">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-6">
-        <div><p className="eyebrow mb-2">AlmiraPrints staff</p><h1 className="text-3xl font-semibold tracking-tight">Quote requests</h1><p className="mt-2 text-sm text-muted-foreground">Signed in as {email}</p></div>
+        <div><p className="eyebrow mb-2">AlmiraPrints staff</p><h1 className="text-3xl font-semibold tracking-tight">{view === "quotes" ? "Quote requests" : "Contact messages"}</h1><p className="mt-2 text-sm text-muted-foreground">Signed in as {email}</p></div>
         <div className="flex flex-wrap items-center gap-2">
-          <span role="status" className="rounded-full border bg-card px-3 py-2 text-xs">{live}</span>
-          <Button variant="outline" onClick={() => setVersion(value => value + 1)}><RefreshCw className="h-4 w-4" />Refresh</Button>
+          {view === "quotes" && <><span role="status" className="rounded-full border bg-card px-3 py-2 text-xs">{live}</span><Button variant="outline" onClick={() => setVersion(value => value + 1)}><RefreshCw className="h-4 w-4" />Refresh</Button></>}
           <Button variant="outline" onClick={signOut} disabled={working === "signout"}><LogOut className="h-4 w-4" />Sign out</Button>
         </div>
       </header>
+      <nav className="my-5 flex flex-wrap gap-2" aria-label="Staff sections">
+        <Button type="button" aria-pressed={view === "quotes"} variant={view === "quotes" ? "default" : "outline"} onClick={() => setView("quotes")}>Quote requests{unread ? ` (${unread} unread)` : ""}</Button>
+        <Button type="button" aria-pressed={view === "contacts"} variant={view === "contacts" ? "default" : "outline"} onClick={() => setView("contacts")}>Contact messages</Button>
+      </nav>
+      {view === "contacts" && <StaffContactMessages />}
+      <div className={view === "quotes" ? "" : "hidden"}>
       <div className="my-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4">
         <div className="flex items-center gap-3"><Bell className="h-5 w-5 text-primary" aria-hidden="true" /><p className="font-medium" aria-live="polite">{unread === null ? "Checking new requests..." : `${unread} unread ${unread === 1 ? "request" : "requests"}`}</p></div>
         <Button size="sm" variant="outline" disabled={!unread || Boolean(working)} onClick={() => void act("/api/staff/seen")}>Mark all as read</Button>
@@ -129,6 +136,7 @@ export function StaffDashboard({ email }: { email: string }) {
             <div className="mt-5"><label htmlFor="request-status" className="mb-2 block text-sm font-semibold">Update status</label><select id="request-status" className="h-10 w-full rounded-lg border bg-background px-3 text-sm sm:max-w-xs" value={selected.status} disabled={Boolean(working)} onChange={event => void act(`/api/staff/quotes/${selected.id}/status`, { status: event.target.value as QuoteStatus })}>{quoteStatuses.map(item => <option key={item} value={item}>{statusLabel(item)}</option>)}</select></div>
           </>}
         </section>
+      </div>
       </div>
     </div>
   </main>;

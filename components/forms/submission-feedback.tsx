@@ -39,12 +39,12 @@ export function EmailFallback({ subject, getBody, hasArtwork = false }: { subjec
   );
 }
 
-export function SubmissionSuccess({ reference, onNewRequest, mode = "mail" }: { reference: string; onNewRequest: () => void; mode?: "mail" | "saved" }) {
+export function SubmissionSuccess({ reference, onNewRequest, mode = "saved" }: { reference: string; onNewRequest: () => void; mode?: "saved" | "contact" }) {
   return (
     <div id="submission-success" role="status" tabIndex={-1} className="rounded-2xl border border-success/30 bg-success/10 p-6 text-center sm:p-10">
       <CheckCircle2 className="mx-auto mb-4 h-10 w-10 text-success" aria-hidden="true" />
-      <h2 className="text-2xl font-semibold">{mode === "saved" ? "Your quote request was saved" : "Request accepted by our mail service"}</h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Keep reference <strong className="text-foreground">{reference}</strong>. {mode === "saved" ? "Your request and any uploaded artwork are stored. Our team still needs to confirm pricing and production details." : "This acknowledges mail-server acceptance; your order and production date still need confirmation from our team."}</p>
+      <h2 className="text-2xl font-semibold">{mode === "saved" ? "Your quote request was saved" : "Your message was saved"}</h2>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Keep reference <strong className="text-foreground">{reference}</strong>. {mode === "saved" ? "Your request and any uploaded artwork are stored. Our team still needs to confirm pricing and production details." : "Our team can now read your message in the staff dashboard."}</p>
       <p className="mt-3 text-sm text-muted-foreground">If you do not hear back, call {contactInfo.phone} and mention your reference.</p>
       <Button type="button" variant="outline" className="mt-6" onClick={onNewRequest}>Start another request</Button>
     </div>

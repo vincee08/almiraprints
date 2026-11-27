@@ -152,7 +152,7 @@ Test on different screen sizes:
 Before deploying to production:
 - [ ] Set `metadataBase` in root layout (e.g., `https://almiraprints.com`)
 - [ ] Update contact information (email, phone, address) if using real data
-- [ ] Connect forms to actual backend/email service
+- [x] Persist quote and contact forms in private Supabase tables
 - [ ] Add real portfolio images
 - [ ] Set up proper error tracking
 - [ ] Configure analytics

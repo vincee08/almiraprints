@@ -8,5 +8,9 @@ export type StaffQuote = {
   artwork_name: string | null; artwork_size: number | null; status: QuoteStatus;
   submitted_at: string; updated_at: string;
 };
+export type StaffContact = {
+  id: string; reference: string; full_name: string; email: string; phone: string;
+  service_type: string; message: string; created_at: string;
+};
 export const staffQuoteColumns = "id,reference,customer_name,email,phone,service_category,specific_service,quantity,size,material,deadline,additional_requirements,tshirt_size,tshirt_color,print_location,artwork_name,artwork_size,status,submitted_at,updated_at";
 export const statusLabel = (status: QuoteStatus) => ({ new: "New", in_progress: "In progress", completed: "Completed", cancelled: "Cancelled" })[status];

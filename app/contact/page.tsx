@@ -6,7 +6,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { ContactForm } from "@/components/forms/contact-form";
 import { Button } from "@/components/ui/button";
 import { contactInfo } from "@/data/navigation";
-import { isDeliveryConfigured } from "@/lib/server/inquiry-delivery";
+import { contactIsConfigured } from "@/lib/server/inquiry-handler";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Contact AlmiraPrints", description: "Contact AlmiraPrints in Tagbina, Surigao del Sur to discuss printing, gifts, artwork and project details." };
@@ -27,7 +27,7 @@ export default function ContactPage() {
       </section>
       <section className="section-padding">
         <div className="container mx-auto grid items-start gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)] lg:px-8">
-          <ContactForm deliveryAvailable={isDeliveryConfigured()} />
+          <ContactForm storageAvailable={contactIsConfigured()} />
           <aside className="space-y-5 lg:sticky lg:top-28">
             <div className="rounded-2xl border bg-card p-6">
               <h2 className="text-xl font-semibold">Find us in Tagbina</h2>

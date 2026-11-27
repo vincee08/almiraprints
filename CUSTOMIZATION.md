@@ -356,7 +356,7 @@ export const quoteFormSchema = z.object({
 
 The quote form saves validated requests to Supabase through `/api/quote`. Artwork uploads directly to the private bucket, and the form shows a reference only when the quote and any required artwork are saved. Quote submissions do not send email. Keep `lib/validations.ts`, the quote form, server handler, and database schema aligned when adding fields.
 
-The separate contact form uses `/api/contact` and SMTP. It returns 503 when SMTP is not configured. See [backend setup](./BACKEND-SETUP.md) for configuration.
+The separate contact form uses `/api/contact` to save private messages in Supabase. It returns 503 when Supabase is unavailable. See [backend setup](./BACKEND-SETUP.md) for configuration.
 
 ## Navigation
 
